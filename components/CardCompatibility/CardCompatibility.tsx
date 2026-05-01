@@ -1,6 +1,6 @@
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
-import { Check } from 'iconoir-react-native';
+// import { Check } from 'iconoir-react-native';
 
 interface CardCompatibilityProps {
     title: string;
@@ -10,7 +10,7 @@ export default function CardCompatibility({ title }: CardCompatibilityProps) {
     return (
         <View style={styles.compatibility}>
             <View style={styles.compatibilityIcon}>
-                <Check color="#FFFFFF" width={22} height={22} />
+                {/* <Check color="#FFFFFF" width={22} height={22} /> */}
             </View>
 
             <Text style={styles.compatibilityText}>{title}</Text>
