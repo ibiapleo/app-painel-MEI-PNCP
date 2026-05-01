@@ -1,4 +1,4 @@
-import EditalExplore from "@/app/components/EditalExplore/EditalExplore";
+import EditalExplore from "@/components/EditalExplore/EditalExplore";
 import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 
