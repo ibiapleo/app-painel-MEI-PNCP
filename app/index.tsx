@@ -1,12 +1,11 @@
-import { createBottomTabNavigator } from '@react-navigation/bottom-tabs';
-import HomeScreen from "@/app/pages/home/HomeScreen";
+import { Redirect } from 'expo-router';
 
-const Tab = createBottomTabNavigator();
+export default function Index() {
+  const hasSeenOnboarding = false; // lógica de aparecer o onboarding ficará pendente da autenticação na api
 
-export default function App(){
-  return(
-      <Tab.Navigator>
-        <Tab.Screen name={"Explore"} component={HomeScreen}/>
-      </Tab.Navigator>
-  )
+  if (hasSeenOnboarding) {
+    return <Redirect href="/(tabs)" />;
+  }
+
+  return <Redirect href="/(onboarding)" />;
 }
