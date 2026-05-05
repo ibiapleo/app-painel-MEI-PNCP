@@ -1,21 +1,5 @@
-import { View, Text, StyleSheet } from 'react-native';
-import { globalStyles, tokens } from '@/theme';
+import HomeScreen from '@/screens/home/HomeScreen';
 
 export default function ExploreScreen() {
-  return (
-    <View style={styles.container}>
-      <Text style={globalStyles.title}>Explore</Text>
-      <Text style={globalStyles.subtitle}>
-        Home principal do app. Aqui entram os editais recomendados.
-      </Text>
-    </View>
-  );
+    return <HomeScreen />;
 }
-
-const styles = StyleSheet.create({
-  container: {
-    ...globalStyles.screen,
-    justifyContent: 'center',
-    gap: tokens.spacing.sm,
-  },
-});

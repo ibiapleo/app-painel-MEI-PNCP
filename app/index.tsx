@@ -1,7 +1,7 @@
 import { Redirect } from 'expo-router';
 
 export default function Index() {
-  const hasSeenOnboarding = false; // lógica de aparecer o onboarding ficará pendente da autenticação na api
+  const hasSeenOnboarding = false;
 
   if (hasSeenOnboarding) {
     return <Redirect href="/(tabs)" />;
