@@ -7,7 +7,7 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { tokens, globalStyles } from '@/theme';
+import { tokens } from '@/theme';
 
 type ButtonSize = 'sm' | 'md' | 'lg';
 
@@ -88,16 +88,16 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: tokens.colors.primary,
+    backgroundColor: tokens.colors.primary[500],
   },
   buttonDisabled: {
     opacity: 0.5,
-    backgroundColor: tokens.colors.neutral,
+    backgroundColor: tokens.colors.neutral[100],
   },
   buttonTextBase: {
     color: tokens.colors.text.onPrimary
   },
   buttonTextDisabled: {
-    color: tokens.colors.text.body
+    color: tokens.typography.textStyles.bodyM.color
   }
 });
