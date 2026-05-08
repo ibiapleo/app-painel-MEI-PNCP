@@ -20,6 +20,9 @@
     ],
     "experiments": {
       "typedRoutes": true
+    },
+    "extra": {
+      "IBGE_API": "https://servicodados.ibge.gov.br/api/v1"
     }
   }
 }

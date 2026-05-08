@@ -4,7 +4,7 @@ import { tokens } from './tokens';
 export const globalStyles = StyleSheet.create({
   screen: {
     flex: 1,
-    backgroundColor: tokens.colors.neutral,
+    backgroundColor: tokens.colors.neutral[100],
     padding: tokens.spacing.lg,
   },
   content: {
@@ -17,33 +17,33 @@ export const globalStyles = StyleSheet.create({
   },
   title: {
     fontFamily: tokens.typography.fontFamily.base,
-    fontSize: tokens.typography.fontSize.title,
-    fontWeight: tokens.typography.fontWeight.extraBold,
-    color: tokens.colors.text.title,
+    fontSize: tokens.typography.textStyles.h1.fontSize,
+    fontWeight: tokens.typography.textStyles.h1.fontWeight,
+    color: tokens.typography.textStyles.h1.color,
   },
   subtitle: {
     fontFamily: tokens.typography.fontFamily.base,
-    fontSize: tokens.typography.fontSize.subtitle,
-    fontWeight: tokens.typography.fontWeight.regular,
-    color: tokens.colors.text.subtitle,
+    fontSize: tokens.typography.textStyles.h5.fontSize,
+    fontWeight: tokens.typography.textStyles.h5.fontWeight,
+    color: tokens.typography.textStyles.h5.color,
   },
   label: {
     fontFamily: tokens.typography.fontFamily.base,
-    fontSize: tokens.typography.fontSize.label,
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.text.label,
+    fontSize: tokens.typography.textStyles.label.fontSize,
+    fontWeight: tokens.typography.textStyles.label.fontWeight,
+    color: tokens.typography.textStyles.label.color,
   },
   body: {
     fontFamily: tokens.typography.fontFamily.base,
-    fontSize: tokens.typography.fontSize.body,
-    fontWeight: tokens.typography.fontWeight.regular,
-    color: tokens.colors.text.body,
+    fontSize: tokens.typography.textStyles.bodyM.fontSize,
+    fontWeight: tokens.typography.textStyles.bodyM.fontWeight,
+    color: tokens.typography.textStyles.bodyM.color,
   },
   bodyDisabled: {
     fontFamily: tokens.typography.fontFamily.base,
-    fontSize: tokens.typography.fontSize.body,
-    fontWeight: tokens.typography.fontWeight.regular,
-    color: tokens.colors.text.bodyDisabled,
+    fontSize: tokens.typography.textStyles.bodyS.fontSize,
+    fontWeight: tokens.typography.textStyles.bodyS.fontWeight,
+    color: tokens.typography.textStyles.caption.color,
   },
   rowCenter: {
     flexDirection: 'row',
