@@ -31,12 +31,12 @@ const styles = StyleSheet.create({
         width: 8,
         height: 8,
         borderRadius: 999,
-        backgroundColor: tokens.colors.highlight
+        backgroundColor: tokens.colors.primary[50]
     },
     dotActive: {
         width: 10,
         height: 10,
         borderRadius: 999,
-        backgroundColor: tokens.colors.primary
+        backgroundColor: tokens.colors.primary[500]
     }
 });

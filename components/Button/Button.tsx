@@ -7,13 +7,15 @@ import {
   ViewStyle,
   TextStyle,
 } from 'react-native';
-import { tokens, globalStyles } from '@/theme';
+import { tokens } from '@/theme';
 
 type ButtonSize = 'sm' | 'md' | 'lg';
+type ButtonVariant = 'solid' | 'outlined';
 
 interface ButtonProps {
   title: string;
   size?: ButtonSize;
+  variant?: ButtonVariant;
   disabled?: boolean;
   onPress: () => void;
   style?: StyleProp<ViewStyle>;
@@ -52,17 +54,20 @@ const BUTTON_SIZES: Record<ButtonSize, { button: ViewStyle; text: TextStyle }> =
 export default function Button({
   title,
   size = 'md',
+  variant = 'solid',
   disabled = false,
   onPress,
   style,
 }: ButtonProps) {
   const variantSize = BUTTON_SIZES[size];
+  const isOutlined = variant === 'outlined';
 
   return (
     <TouchableOpacity
       style={[
         styles.buttonBase,
         variantSize.button,
+        isOutlined && styles.buttonOutlined,
         disabled && styles.buttonDisabled,
         style,
       ]}
@@ -74,7 +79,8 @@ export default function Button({
         style={[
             styles.buttonTextBase, 
             variantSize.text,
-            disabled && styles.buttonTextDisabled
+            disabled && styles.buttonTextDisabled,
+            isOutlined && styles.buttonTextOutlined
         ]}
         >
         {title}
@@ -88,16 +94,24 @@ const styles = StyleSheet.create({
     borderRadius: tokens.radius.md,
     alignItems: 'center',
     justifyContent: 'center',
-    backgroundColor: tokens.colors.primary,
+    backgroundColor: tokens.colors.primary[500],
+  },
+  buttonOutlined: {
+    borderWidth: 1,
+    borderColor: tokens.colors.primary[500],
+    backgroundColor: tokens.colors.neutral[50],
   },
   buttonDisabled: {
     opacity: 0.5,
-    backgroundColor: tokens.colors.neutral,
+    backgroundColor: tokens.colors.neutral[100],
   },
   buttonTextBase: {
     color: tokens.colors.text.onPrimary
   },
   buttonTextDisabled: {
-    color: tokens.colors.text.body
+    color: tokens.typography.textStyles.bodyM.color
+  },
+  buttonTextOutlined: {
+    color: tokens.colors.primary[500],
   }
 });

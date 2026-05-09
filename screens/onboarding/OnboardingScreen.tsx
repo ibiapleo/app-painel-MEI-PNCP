@@ -1,13 +1,15 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet } from 'react-native';
+import { setOnboardingDone } from "@/services/localAuth";
 import Button from "@/components/Button/Button";
 import StepIndicator from "@/components/StepIndicator/StepIndicator";
 import OnboardingFirstSVG from '@/assets/Onboarding-1.svg';
 import OnboardingSecondSVG from '@/assets/Onboarding-2.svg';
 import OnboardingThirdSVG from '@/assets/Onboarding-3.svg';
+import OnboardingFourthSVG from '@/assets/Onboarding-4.svg';
 import { globalStyles, tokens } from '@/theme';
 import { SvgProps } from "react-native-svg";
-import { useRouter } from "expo-router";
+import { useRouter, type Href } from "expo-router";
 
 type OnboardingStep = {
     id: number;
@@ -16,7 +18,7 @@ type OnboardingStep = {
     illustration: React.ComponentType<SvgProps>;
 }
 
-const onboardingSteps: ReadonlyArray<OnboardingStep> = [
+const onboardingSteps: readonly OnboardingStep[] = [
     {
         id: 1,
         title: 'Boas-vindas ao LicitaFácil!',
@@ -34,6 +36,12 @@ const onboardingSteps: ReadonlyArray<OnboardingStep> = [
         title: 'Não perca nenhum prazo importante!',
         subtitle: 'Ative as notificações para ser avisado sobre novidades e datas de entrega dos seus editais salvos.',
         illustration: OnboardingThirdSVG
+    },
+    {
+        id: 4,
+        title: 'Crie sua conta no LicitaFácil!',
+        subtitle: 'Garanta acesso a oportunidades exclusivas para o seu negócio!',
+        illustration: OnboardingFourthSVG
     }
 ]
 
@@ -41,15 +49,24 @@ export default function OnboardingScreen() {
     const router = useRouter();
     const [currentStep, setCurrentStep] = useState(0);
     const current = onboardingSteps[currentStep];
+    const isStepThree = currentStep === 2;
     const isLastStep = currentStep === onboardingSteps.length - 1;
 
-    const handleNext = () => {
+    const handleNext = async () => {
         if (!isLastStep) {
             setCurrentStep((prev) => prev + 1);
             return;
         }
-        router.replace('/(tabs)');
-    }
+    };
+
+    const handleGoToSignup = async () => {
+        await setOnboardingDone(true);
+        router.replace('/(signup)/step1' as Href);
+    };
+
+    const handleGoToLogin = () => {
+        router.replace('/(auth)/login' as Href);
+    };
 
     const Illustration = current.illustration;
 
@@ -60,17 +77,26 @@ export default function OnboardingScreen() {
             </View>
 
             <View style={styles.contentWrapper}>
-                <View style={styles.stepIndicatorWrapper}>
-                    <StepIndicator total={onboardingSteps.length} current={currentStep}/>
-                </View>
+                {!isLastStep ? (
+                    <View style={styles.stepIndicatorWrapper}>
+                        <StepIndicator total={3} current={currentStep}/>
+                    </View>
+                ): null}
 
                 <View style={styles.textContent}>
                     <Text style={globalStyles.title}>{current.title}</Text>
-                    <Text style={globalStyles.subtitle}>{current.subtitle}</Text>
+                    <Text style={globalStyles.bodyDisabled}>{current.subtitle}</Text>
                 </View>
 
                 <View style={styles.buttonWrapper}>
-                    <Button title={isLastStep ? 'Começar' : 'Próximo'} onPress={handleNext}/>
+                    {isLastStep ? (
+                        <>
+                            <Button title="Registrar" onPress={handleGoToSignup}/>
+                            <Button variant="outlined" title="Entrar" onPress={handleGoToLogin}/>
+                        </>
+                    ) : (
+                        <Button title={isStepThree ? 'Começar' : 'Próximo'} onPress={handleNext} />
+                    )}
                 </View>
             </View>
 
@@ -82,7 +108,6 @@ const styles = StyleSheet.create({
   screen: {
     ...globalStyles.screen,
     justifyContent: 'space-evenly',
-    gap: tokens.spacing.xl,
   },
   illustrationWrapper: {
     alignItems: 'center',
@@ -90,7 +115,7 @@ const styles = StyleSheet.create({
     padding: tokens.spacing.md,
   },
   contentWrapper: {
-    gap: tokens.spacing.lg,
+    gap: tokens.spacing.xxl,
     padding: tokens.spacing.md,
   },
   stepIndicatorWrapper: {
@@ -103,5 +128,6 @@ const styles = StyleSheet.create({
   buttonWrapper: {
     alignItems: 'stretch',
     justifyContent: 'center',
+    gap: tokens.spacing.lg,
   },
 });
