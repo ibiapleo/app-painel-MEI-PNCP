@@ -8,4 +8,9 @@ export interface Opportunity {
     daysRemaining: number;
     compatibilityLabel: string;
     isFavorite: boolean;
+    simplifiedSummary: string;
+    fullDescription: string;
+    modality: string;
+    categories: string[];
+    externalUrl?: string;
 }
