@@ -42,7 +42,8 @@ app-painel-MEI-PNCP/
 │   ├── components/               # Componentes reutilizáveis (Button, OpportunityCard, etc.)
 │   ├── hooks/                    # Hooks customizados (useOpportunities, useSignup, ...)
 │   ├── screens/                  # Telas (home, onboarding, signup)
-│   ├── services/                 # Integrações externas (PNCP, IBGE, localAuth)
+│   ├── services/                 # Integrações externas (PNCP, IBGE)
+│   ├── stores/                   # Zustand (auth, signup, opportunities, notifications)
 │   ├── theme/                    # Tokens de design e estilos globais
 │   └── types/                    # Tipagens compartilhadas
 ├── docs/                         # Documentação por Capstone
