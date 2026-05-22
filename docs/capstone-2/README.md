@@ -46,8 +46,8 @@
 | Ticket | Descrição | Responsável |
 |---|---|-------------|
 | KAN-17 | Modal da tela Home (detalhe do edital) | João |
-| KAN-18 | Finalizar entrega da UI de login (`LoginScreen`), formulário + erros de autenticação. |
-| KAN-19 | Finalizar entrega do fluxo completo: e-mail → código de confirmação (mock `0000`) → nova senha → retorno ao login. |
+| KAN-18 | Finalizar entrega da UI de login (`LoginScreen`), formulário + erros de autenticação. | Leo |
+| KAN-19 | Finalizar entrega do fluxo completo: e-mail → código de confirmação (mock `0000`) → nova senha → retorno ao login. | Leo |
 
 ## Pendência de back-end
 
@@ -64,7 +64,6 @@ Contratos em rascunho (formato alinhado ao de editais). O app ainda consome mock
 
 ## Documentos relacionados
 
-- [Visão geral dos contratos](./contrato-back-visao-geral.md)
 - [Contrato — Editais](./contrato-back-editais.md)
 - [Contrato — Auth](./contrato-back-auth.md)
 - [Contrato — Recuperação de senha](./contrato-back-recuperacao-senha.md)
