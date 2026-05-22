@@ -11,6 +11,7 @@ interface OpportunityCardProps {
     daysRemaining: string;
     isFavorite: boolean;
     onToggleFavorite: () => void;
+    onPress?: () => void;
 }
 
 export function OpportunityCard({
@@ -22,9 +23,13 @@ export function OpportunityCard({
     daysRemaining,
     isFavorite,
     onToggleFavorite,
+    onPress,
 }: OpportunityCardProps) {
     return (
-        <View style={styles.card}>
+        <Pressable
+            onPress={onPress}
+            style={({ pressed }) => [styles.card, pressed && onPress ? styles.cardPressed : null]}
+        >
             <View style={styles.top}>
                 <CompatibilityBadge title="Altamente Compatível" />
 
@@ -68,7 +73,7 @@ export function OpportunityCard({
                     <Text style={styles.days}>{daysRemaining}</Text>
                 </View>
             </View>
-        </View>
+        </Pressable>
     );
 }
 
@@ -78,6 +83,9 @@ const styles = StyleSheet.create({
         borderRadius: 18,
         padding: 16,
         marginBottom: 16,
+    },
+    cardPressed: {
+        opacity: 0.85,
     },
     top: {
         flexDirection: 'row',

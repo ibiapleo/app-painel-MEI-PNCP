@@ -1,14 +1,22 @@
+import { useMemo, useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
 
+import { EditalDetailsModal } from '@/components/EditalDetailsModal/EditalDetailsModal';
 import { FilterTabs } from '@/components/FilterTabs/FilterTabs';
 import { OpportunityCard } from '@/components/OpportunityCard/OpportunityCard';
 import { SearchHeader } from '@/components/SearchHeader/SearchHeader';
 import { useOpportunities } from '@/hooks/useOpportunities';
-import {useNotifications} from "@/hooks/useNotifications";
+import { useNotifications } from '@/hooks/useNotifications';
 
 export default function HomeScreen() {
     const { opportunities, isLoading, error, toggleFavorite } = useOpportunities();
     const { notificationCount } = useNotifications();
+    const [selectedId, setSelectedId] = useState<string | null>(null);
+
+    const selectedOpportunity = useMemo(
+        () => opportunities.find((opportunity) => opportunity.id === selectedId) ?? null,
+        [opportunities, selectedId],
+    );
 
     return (
         <View style={styles.container}>
@@ -39,10 +47,24 @@ export default function HomeScreen() {
                             daysRemaining={`${opportunity.daysRemaining} dias restantes`}
                             isFavorite={opportunity.isFavorite}
                             onToggleFavorite={() => toggleFavorite(opportunity.id)}
+                            onPress={() => setSelectedId(opportunity.id)}
                         />
                     ))}
                 </ScrollView>
             )}
+
+            <EditalDetailsModal
+                visible={!!selectedOpportunity}
+                opportunity={selectedOpportunity}
+                onClose={() => setSelectedId(null)}
+                onToggleFavorite={toggleFavorite}
+                onFollow={(id) => {
+                    console.log('Acompanhar edital:', id);
+                }}
+                onOpenExternal={(id) => {
+                    console.log('Abrir edital externo:', id);
+                }}
+            />
         </View>
     );
 }
