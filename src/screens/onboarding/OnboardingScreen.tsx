@@ -1,6 +1,5 @@
 import React, { useState } from "react";
 import { View, Text, StyleSheet } from 'react-native';
-import { setOnboardingDone } from "@/services/localAuth";
 import Button from "@/components/Button/Button";
 import StepIndicator from "@/components/StepIndicator/StepIndicator";
 import OnboardingFirstSVG from '@/assets/Onboarding-1.svg';
@@ -59,8 +58,7 @@ export default function OnboardingScreen() {
         }
     };
 
-    const handleGoToSignup = async () => {
-        await setOnboardingDone(true);
+    const handleGoToSignup = () => {
         router.replace('/(signup)/step1' as Href);
     };
 
