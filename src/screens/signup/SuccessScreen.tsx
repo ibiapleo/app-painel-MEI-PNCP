@@ -9,9 +9,9 @@ export default function SuccessScreen() {
     const router = useRouter();
     const Illustration = SuccessSVG;
 
-    const handleNext = async () => {
-        router.push("/(tabs)" as Href);
-    }
+    const handleNext = () => {
+        router.replace('/(auth)/login' as Href);
+    };
 
     return (
         <View style={styles.screen}>
