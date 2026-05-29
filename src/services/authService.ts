@@ -31,7 +31,7 @@ export const authService = {
   async logout() {
     try {
       await api.post('/auth/logout');
-    } catch (e) {
+    } catch (_error) {
       // Ignora erro se já estiver deslogado
     }
     await SecureStore.deleteItemAsync('access_token');

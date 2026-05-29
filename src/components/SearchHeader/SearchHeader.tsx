@@ -1,17 +1,27 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { Text, View, StyleSheet } from 'react-native';
+import { Text, View, StyleSheet, TextInput } from 'react-native';
 
 interface SearchHeaderProps {
     notificationCount: number;
+    onSearch?: (text: string) => void;
 }
 
-export function SearchHeader({ notificationCount }: SearchHeaderProps) {
+export function SearchHeader({ notificationCount, onSearch }: SearchHeaderProps) {
     const hasNotifications = notificationCount > 0;
 
     return (
         <View style={styles.container}>
             <View style={styles.searchBox}>
                 <Feather name="search" size={22} color="#202124" />
+                
+                <TextInput 
+                    style={styles.searchInput}
+                    placeholder="Pesquisar editais..."
+                    placeholderTextColor="#A0A0A5"
+                    onChangeText={onSearch}
+                    returnKeyType="search"
+                    autoCorrect={false}
+                />
 
                 <Feather name="sliders" size={18} color="#202124" />
             </View>
@@ -51,7 +61,13 @@ const styles = StyleSheet.create({
         paddingHorizontal: 16,
         flexDirection: 'row',
         alignItems: 'center',
-        justifyContent: 'space-between',
+    },
+    searchInput: {
+        flex: 1,
+        marginHorizontal: 10,
+        fontSize: 16,
+        color: '#202124',
+        padding: 0,
     },
     notificationWrapper: {
         position: 'relative',

@@ -1,5 +1,5 @@
-import { useMemo, useState } from 'react';
-import { ActivityIndicator, ScrollView, StyleSheet, Text, View } from 'react-native';
+import { useState } from 'react';
+import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Alert } from 'react-native';
 
 import { EditalDetailsModal } from '@/components/EditalDetailsModal/EditalDetailsModal';
 import { FilterTabs } from '@/components/FilterTabs/FilterTabs';
@@ -7,27 +7,64 @@ import { OpportunityCard } from '@/components/OpportunityCard/OpportunityCard';
 import { SearchHeader } from '@/components/SearchHeader/SearchHeader';
 import { useOpportunities } from '@/hooks/useOpportunities';
 import { useNotifications } from '@/hooks/useNotifications';
+import { getOpportunityDetail } from '@/services/opportunitiesService';
+import type { OpportunityDetail } from '@/types/opportunity';
+
+let searchTimeout: ReturnType<typeof setTimeout>;
 
 export default function HomeScreen() {
-    const { opportunities, isLoading, error, toggleFavorite } = useOpportunities();
+    const { 
+        opportunities, 
+        isLoading, 
+        error, 
+        toggleFavorite, 
+        search,
+        openExternalLink 
+    } = useOpportunities();
+    
     const { notificationCount } = useNotifications();
-    const [selectedId, setSelectedId] = useState<string | null>(null);
+    
+    const [selectedDetail, setSelectedDetail] = useState<OpportunityDetail | null>(null);
+    const [isFetchingDetail, setIsFetchingDetail] = useState(false);
 
-    const selectedOpportunity = useMemo(
-        () => opportunities.find((opportunity) => opportunity.id === selectedId) ?? null,
-        [opportunities, selectedId],
-    );
+    const handleSearch = (text: string) => {
+        clearTimeout(searchTimeout);
+        searchTimeout = setTimeout(() => {
+            if (search) search(text);
+        }, 500);
+    };
+
+    const handleOpenDetails = async (id: string) => {
+        try {
+            setIsFetchingDetail(true);
+            const detail = await getOpportunityDetail(id);
+            setSelectedDetail(detail);
+        } catch (_error) {
+            Alert.alert('Erro', 'Não foi possível carregar os detalhes do edital.');
+        } finally {
+            setIsFetchingDetail(false);
+        }
+    };
 
     return (
         <View style={styles.container}>
-            <SearchHeader notificationCount={notificationCount} />
+            <SearchHeader 
+                notificationCount={notificationCount} 
+                onSearch={handleSearch} 
+            />
             <FilterTabs />
 
-            {isLoading && <ActivityIndicator style={styles.feedback} />}
+            {(isLoading || isFetchingDetail) && (
+                <ActivityIndicator style={styles.feedback} size="large" color="#0000ff" />
+            )}
 
-            {error && <Text style={styles.error}>{error}</Text>}
+            {error ? <Text style={styles.error}>{error}</Text> : null}
 
-            {!isLoading && !error && (
+            {!isLoading && !error && opportunities.length === 0 && (
+                <Text style={styles.emptyState}>Nenhum edital encontrado.</Text>
+            )}
+
+            {!isLoading && !isFetchingDetail && !error && opportunities.length > 0 && (
                 <ScrollView
                     style={styles.content}
                     contentContainerStyle={styles.contentContainer}
@@ -40,29 +77,30 @@ export default function HomeScreen() {
                             company={opportunity.company}
                             location={opportunity.location}
                             description={opportunity.description}
-                            value={opportunity.estimatedValue.toLocaleString('pt-BR', {
+                            value={Number(opportunity.estimatedValue).toLocaleString('pt-BR', {
                                 style: 'currency',
                                 currency: 'BRL',
                             })}
                             daysRemaining={`${opportunity.daysRemaining} dias restantes`}
                             isFavorite={opportunity.isFavorite}
+                            compatibilityLabel={opportunity.compatibilityLabel}
                             onToggleFavorite={() => toggleFavorite(opportunity.id)}
-                            onPress={() => setSelectedId(opportunity.id)}
+                            onPress={() => handleOpenDetails(opportunity.id)}
                         />
                     ))}
                 </ScrollView>
             )}
 
             <EditalDetailsModal
-                visible={!!selectedOpportunity}
-                opportunity={selectedOpportunity}
-                onClose={() => setSelectedId(null)}
+                visible={!!selectedDetail}
+                opportunity={selectedDetail}
+                onClose={() => setSelectedDetail(null)}
                 onToggleFavorite={toggleFavorite}
                 onFollow={(id) => {
                     console.log('Acompanhar edital:', id);
                 }}
                 onOpenExternal={(id) => {
-                    console.log('Abrir edital externo:', id);
+                    openExternalLink(selectedDetail?.pncpUrl || id);
                 }}
             />
         </View>
@@ -90,5 +128,12 @@ const styles = StyleSheet.create({
         textAlign: 'center',
         color: '#D92D20',
         fontWeight: '600',
+        paddingHorizontal: 24,
     },
+    emptyState: {
+        marginTop: 32,
+        textAlign: 'center',
+        color: '#666',
+        fontSize: 16,
+    }
 });

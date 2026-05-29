@@ -2,7 +2,6 @@ import React from 'react';
 import { View, Text, StyleSheet } from 'react-native';
 // import { Heart } from 'iconoir-react-native';
 import CardCompatibility from "@/components/CardCompatibility/CardCompatibility";
-import Button from '@/components/Button/Button';
 
 interface EditalExploreProps {
     title: string;
