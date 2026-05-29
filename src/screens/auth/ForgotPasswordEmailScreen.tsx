@@ -12,7 +12,8 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter, type Href } from 'expo-router';
 
 import Button from '@/components/Button/Button';
-import { usePasswordRecoveryStore } from '@/stores/auth/passwordRecovery';
+import { usePasswordRecoveryStore } from '@/stores/auth/usePasswordRecoveryStore';
+import { authService } from '@/services/authService';
 import { tokens } from '@/theme';
 
 function isValidEmail(value: string) {
@@ -24,22 +25,33 @@ export default function ForgotPasswordEmailScreen() {
   const clearRecovery = usePasswordRecoveryStore((state) => state.clear);
   const [email, setEmail] = useState('');
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
     clearRecovery();
   }, [clearRecovery]);
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (!isValidEmail(email)) {
       setError('Digite um e-mail válido');
       return;
     }
 
     setError('');
-    router.push({
-      pathname: '/(auth)/forgot-password/code',
-      params: { email: email.trim() },
-    } as Href);
+    setIsLoading(true);
+
+    try {
+      await authService.requestPasswordReset(email.trim());
+      
+      router.push({
+        pathname: '/(auth)/forgot-password/code',
+        params: { email: email.trim() },
+      } as Href);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Erro ao processar solicitação.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -85,6 +97,7 @@ export default function ForgotPasswordEmailScreen() {
           onPress={handleContinue}
           size="lg"
           style={styles.primaryButton}
+          disabled={isLoading}
         />
       </View>
     </KeyboardAvoidingView>

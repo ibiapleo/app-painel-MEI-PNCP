@@ -15,40 +15,38 @@ import { useRouter, type Href } from 'expo-router';
 
 import LoginIllustration from '@/assets/Login.svg';
 import Button from '@/components/Button/Button';
-import { useAuthStore, selectIsSessionValid } from '@/stores/auth/useAuthStore';
-import { useSignupStore } from '@/stores/signup/useSignupStore';
+import { useAuthStore } from '@/stores/auth/useAuthStore';
+import { useSignupStore } from '@/stores/auth/useSignUpStore';
 import { tokens } from '@/theme';
-
-const HEADER_BACKGROUND = '#F0F4F8';
 
 export default function LoginScreen() {
   const router = useRouter();
-  const login = useAuthStore((state) => state.login);
-  const isLoading = useAuthStore((state) => state.isLoading);
-  const isSessionValid = useAuthStore(selectIsSessionValid);
+  const { login, isLoading, isAuthenticated } = useAuthStore();
   const signupEmail = useSignupStore((state) => state.draft.email);
 
-  const [email, setEmail] = useState(
-    signupEmail.trim() || 'usuario@licitafacil.mock',
-  );
-  const [password, setPassword] = useState('123456');
+  const [email, setEmail] = useState(signupEmail.trim() || '');
+  const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
+  const [loginError, setLoginError] = useState('');
 
   useEffect(() => {
-    if (isSessionValid) {
+    if (isAuthenticated) {
       router.replace('/(tabs)' as Href);
     }
-  }, [isSessionValid, router]);
-
-  const [loginError, setLoginError] = useState('');
+  }, [isAuthenticated, router]);
 
   const handleLogin = async () => {
     setLoginError('');
+    if (!email || !password) {
+      setLoginError('Preencha e-mail e senha.');
+      return;
+    }
 
     try {
       await login(email, password);
-    } catch {
-      setLoginError('E-mail ou senha incorretos');
+    } catch (error: any) {
+      const errorMessage = error.response?.data?.detail || 'E-mail ou senha incorretos';
+      setLoginError(errorMessage);
     }
   };
 
@@ -159,7 +157,7 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   keyboardView: {
     flex: 1,
-    backgroundColor: HEADER_BACKGROUND,
+    backgroundColor: tokens.colors.neutral[100],
   },
   screen: {
     flex: 1,
@@ -167,7 +165,7 @@ const styles = StyleSheet.create({
   header: {
     flex: 0.4,
     minHeight: 260,
-    backgroundColor: HEADER_BACKGROUND,
+    backgroundColor: tokens.colors.neutral[100],
     alignItems: 'center',
     justifyContent: 'center',
     paddingHorizontal: tokens.spacing.xl,
