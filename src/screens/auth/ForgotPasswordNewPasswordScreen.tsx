@@ -13,32 +13,29 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter, type Href } from 'expo-router';
 
 import Button from '@/components/Button/Button';
-import { usePasswordRecoveryStore } from '@/stores/auth/passwordRecovery';
-import { useAuthStore } from '@/stores/auth/useAuthStore';
+import { usePasswordRecoveryStore } from '@/stores/auth/usePasswordRecoveryStore';
+import { authService } from '@/services/authService';
 import { tokens } from '@/theme';
 
 const MIN_PASSWORD_LENGTH = 6;
 
 export default function ForgotPasswordNewPasswordScreen() {
   const router = useRouter();
-  const isCodeVerified = usePasswordRecoveryStore(
-    (state) => state.isCodeVerified,
-  );
+  const resetToken = usePasswordRecoveryStore((state) => state.resetToken);
   const clearRecovery = usePasswordRecoveryStore((state) => state.clear);
-  const updatePassword = useAuthStore((state) => state.updatePassword);
-  const isLoading = useAuthStore((state) => state.isLoading);
 
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
-    if (!isCodeVerified) {
+    if (!resetToken) {
       router.replace('/(auth)/forgot-password' as Href);
     }
-  }, [isCodeVerified, router]);
+  }, [resetToken, router]);
 
   const handleSubmit = async () => {
     if (password.length < MIN_PASSWORD_LENGTH) {
@@ -52,18 +49,22 @@ export default function ForgotPasswordNewPasswordScreen() {
     }
 
     setError('');
+    setIsLoading(true);
 
     try {
-      await updatePassword(password);
+      await authService.completePasswordReset(resetToken!, password);
+      
       clearRecovery();
       router.replace('/(auth)/login' as Href);
-    } catch {
-      setError('Não foi possível atualizar a senha. Tente novamente.');
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Não foi possível atualizar a senha. Tente novamente.');
+    } finally {
+      setIsLoading(false);
     }
   };
 
-  if (!isCodeVerified) {
-    return null;
+  if (!resetToken) {
+    return null; 
   }
 
   return (
@@ -75,6 +76,7 @@ export default function ForgotPasswordNewPasswordScreen() {
         style={styles.backButton}
         onPress={() => router.back()}
         accessibilityLabel="Voltar"
+        disabled={isLoading}
       >
         <Feather name="arrow-left" size={24} color={tokens.colors.text.primary} />
       </Pressable>
@@ -152,7 +154,7 @@ export default function ForgotPasswordNewPasswordScreen() {
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
         <Button
-          title="Atualizar senha"
+          title={isLoading ? "Atualizando..." : "Atualizar senha"}
           onPress={handleSubmit}
           size="lg"
           style={styles.primaryButton}

@@ -1,101 +1,161 @@
-import React, { useMemo } from 'react';
+import React, { useState } from 'react';
 import {
-	SafeAreaView,
-	View,
-	Text,
-	TextInput,
-	StyleSheet,
-	ScrollView,
+    SafeAreaView,
+    View,
+    Text,
+    TextInput,
+    StyleSheet,
+    ScrollView,
+    ActivityIndicator
 } from 'react-native';
 import StepIndicator from '@/components/StepIndicator/StepIndicator';
 import Button from '@/components/Button/Button';
 import { globalStyles, tokens } from '@/theme';
 import { useSignup } from '../../hooks/useSignup';
 
-const MOCK_CNAES = [
-	'[10503-8] PRODUÇÃO DE SORVETES',
-	'[10503-8] PRODUÇÃO DE SORVETES',
-	'[10503-8] PRODUÇÃO DE SORVETES',
-	'[10503-8] PRODUÇÃO DE SORVETES',
-	'[10503-8] PRODUÇÃO DE SORVETES',
-];
-
 export default function StepTwoScreen() {
-	const signup = useSignup('step2');
-	const { fields: formFields, focusedField, setFocusedField, handleNext } = signup.step2;
+    const signup = useSignup('step2');
+    const { 
+        draft, 
+        errors, 
+        setDraftField, 
+        handleCpfBlur, 
+        handleCnpjBlur, 
+        handleNext, 
+        formatCpf, 
+        formatCnpj,
+        loadingCnaes
+    } = signup.step2;
 
-	const visibleCnaes = useMemo(() => MOCK_CNAES.slice(0, 5), []);
+    const [focusedField, setFocusedField] = useState<string | null>(null);
 
-	return (
-		<SafeAreaView style={styles.safeArea}>
-			<View style={styles.screen}>
-				<View style={styles.headerSection}>
-					<View style={styles.stepIndicatorWrapper}>
-						<StepIndicator total={3} current={1} />
-					</View>
+    return (
+        <SafeAreaView style={styles.safeArea}>
+            <View style={styles.screen}>
+                <View style={styles.headerSection}>
+                    <View style={styles.stepIndicatorWrapper}>
+                        <StepIndicator total={3} current={1} />
+                    </View>
 
-					<View style={styles.textWrapper}>
-						<Text style={globalStyles.title}>Registro</Text>
-						<Text style={globalStyles.bodyDisabled}>
-							Crie uma conta para começar
-						</Text>
-					</View>
-				</View>
+                    <View style={styles.textWrapper}>
+                        <Text style={globalStyles.title}>Registro</Text>
+                        <Text style={globalStyles.bodyDisabled}>
+                            Crie uma conta para começar
+                        </Text>
+                    </View>
+                </View>
 
-				<ScrollView
-					style={styles.scrollArea}
-					contentContainerStyle={styles.content}
-					showsVerticalScrollIndicator={false}
- 				>
-          {formFields.map((field) => (
-						<View key={field.id} style={styles.fieldGroup}>
-							<Text style={styles.label}>{field.label}</Text>
-							<TextInput
-								value={field.value}
-								onChangeText={field.onChangeText}
-								placeholder={field.placeholder}
-								placeholderTextColor={tokens.colors.text.secondary}
-								selectionColor={tokens.colors.primary[500]}
-								keyboardType={field.keyboardType}
-								onFocus={() => setFocusedField(field.id)}
-								onBlur={() => {
-									setFocusedField(null);
-									field.onBlur?.();
-								}}
-								style={[
-									styles.input,
-									field.error && { borderColor: tokens.colors.error[500] },
-									focusedField === field.id && !field.error && { borderColor: tokens.colors.primary[500] },
-								]}
-							/>
-							{field.error ? <Text style={styles.errorText}>{field.error}</Text> : null}
-						</View>
-					))}
+                <ScrollView
+                    style={styles.scrollArea}
+                    contentContainerStyle={styles.content}
+                    showsVerticalScrollIndicator={false}
+                >
+                    <View style={styles.fieldGroup}>
+                        <Text style={styles.label}>Nome</Text>
+                        <TextInput
+                            value={draft.name}
+                            onChangeText={(text) => setDraftField('name', text)}
+                            placeholder="Seu nome completo"
+                            placeholderTextColor={tokens.colors.text.secondary}
+                            selectionColor={tokens.colors.primary[500]}
+                            onFocus={() => setFocusedField('name')}
+                            onBlur={() => setFocusedField(null)}
+                            style={[
+                                styles.input,
+                                focusedField === 'name' && { borderColor: tokens.colors.primary[500] },
+                            ]}
+                        />
+                    </View>
 
-					<View style={styles.cnaesSection}>
-						<Text style={styles.label}>CNAEs</Text>
-						<Text style={styles.helperText}>
-							Buscamos automaticamente através do seu CNPJ.
-						</Text>
+                    <View style={styles.fieldGroup}>
+                        <Text style={styles.label}>CPF</Text>
+                        <TextInput
+                            value={draft.cpf}
+                            onChangeText={(text) => setDraftField('cpf', formatCpf(text))}
+                            placeholder="000.000.000-00"
+                            keyboardType="number-pad"
+                            placeholderTextColor={tokens.colors.text.secondary}
+                            selectionColor={tokens.colors.primary[500]}
+                            onFocus={() => setFocusedField('cpf')}
+                            onBlur={() => {
+                                setFocusedField(null);
+                                handleCpfBlur();
+                            }}
+                            style={[
+                                styles.input,
+                                errors.cpf && { borderColor: tokens.colors.error[500] },
+                                focusedField === 'cpf' && !errors.cpf && { borderColor: tokens.colors.primary[500] },
+                            ]}
+                        />
+                        {errors.cpf ? <Text style={styles.errorText}>{errors.cpf}</Text> : null}
+                    </View>
 
-						<View style={styles.mockCnaesList}>
-							{visibleCnaes.map((cnae, index) => (
-								<View key={`${cnae}-${index}`} style={styles.cnaeCard}>
-									<Text style={styles.cnaeText}>{cnae};</Text>
-								</View>
-							))}
-						</View>
+                    <View style={styles.fieldGroup}>
+                        <Text style={styles.label}>CNPJ</Text>
+                        <TextInput
+                            value={draft.cnpj}
+                            onChangeText={(text) => setDraftField('cnpj', formatCnpj(text))}
+                            placeholder="XX.XXX.XXX/0001-XX"
+                            keyboardType="number-pad"
+                            placeholderTextColor={tokens.colors.text.secondary}
+                            selectionColor={tokens.colors.primary[500]}
+                            onFocus={() => setFocusedField('cnpj')}
+                            onBlur={() => {
+                                setFocusedField(null);
+                                handleCnpjBlur();
+                            }}
+                            style={[
+                                styles.input,
+                                errors.cnpj && { borderColor: tokens.colors.error[500] },
+                                focusedField === 'cnpj' && !errors.cnpj && { borderColor: tokens.colors.primary[500] },
+                            ]}
+                        />
+                        {errors.cnpj ? <Text style={styles.errorText}>{errors.cnpj}</Text> : null}
+                    </View>
 
-						<Text style={styles.moreText}>... e mais outros 14.</Text>
-					</View>
-				</ScrollView>
+                    <View style={styles.cnaesSection}>
+                        <Text style={styles.label}>CNAEs</Text>
+                        
+                        {loadingCnaes ? (
+                            <View style={{ paddingVertical: tokens.spacing.lg }}>
+                                <ActivityIndicator size="small" color={tokens.colors.primary[500]} />
+                                <Text style={[styles.helperText, { textAlign: 'center', marginTop: 8 }]}>Buscando CNAEs...</Text>
+                            </View>
+                        ) : draft.cnaes.length > 0 ? (
+                            <>
+                                <Text style={styles.helperText}>
+                                    Encontramos os seguintes CNAEs vinculados a este CNPJ:
+                                </Text>
+                                <View style={styles.mockCnaesList}>
+                                    {draft.cnaes.slice(0, 5).map((cnae, index) => (
+                                        <View key={`${cnae.id}-${index}`} style={styles.cnaeCard}>
+                                            <Text style={styles.cnaeText}>[{cnae.id}] {cnae.title}</Text>
+                                        </View>
+                                    ))}
+                                </View>
+                                {draft.cnaes.length > 5 && (
+                                    <Text style={styles.moreText}>... e mais outros {draft.cnaes.length - 5}.</Text>
+                                )}
+                            </>
+                        ) : (
+                            <Text style={styles.helperText}>
+                                Digite um CNPJ válido para buscarmos os CNAEs automaticamente.
+                            </Text>
+                        )}
+                    </View>
+                </ScrollView>
 
-				<View style={styles.footerSection}>
-							<Button title="Próximo" onPress={handleNext} size="md" />
-				</View>
-			</View>
-		</SafeAreaView>
-	);
+                <View style={styles.footerSection}>
+                    <Button 
+                        title="Próximo" 
+                        onPress={handleNext} 
+                        size="md" 
+                        disabled={loadingCnaes} 
+                    />
+                </View>
+            </View>
+        </SafeAreaView>
+    );
 }
 
 const styles = StyleSheet.create({

@@ -15,17 +15,15 @@ import { Feather } from '@expo/vector-icons';
 import { useLocalSearchParams, useRouter, type Href } from 'expo-router';
 
 import Button from '@/components/Button/Button';
-import { usePasswordRecoveryStore } from '@/stores/auth/passwordRecovery';
+import { usePasswordRecoveryStore } from '@/stores/auth/usePasswordRecoveryStore';
+import { authService } from '@/services/authService';
 import { tokens } from '@/theme';
 
 const CODE_LENGTH = 4;
-const MOCK_RECOVERY_CODE = '0000';
 
 export default function ForgotPasswordCodeScreen() {
   const router = useRouter();
-  const setVerifiedEmail = usePasswordRecoveryStore(
-    (state) => state.setVerifiedEmail,
-  );
+  const setVerifiedCode = usePasswordRecoveryStore((state) => state.setVerifiedCode);
   const { email } = useLocalSearchParams<{ email: string }>();
   const displayEmail = typeof email === 'string' ? email : '';
 
@@ -34,6 +32,7 @@ export default function ForgotPasswordCodeScreen() {
   );
   const [focusedIndex, setFocusedIndex] = useState(0);
   const [error, setError] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
   const inputRefs = useRef<(TextInput | null)[]>([]);
 
   const code = digits.join('');
@@ -68,30 +67,43 @@ export default function ForgotPasswordCodeScreen() {
     }
   };
 
-  const handleResend = () => {
+  const handleResend = async () => {
     setDigits(Array.from({ length: CODE_LENGTH }, () => ''));
     setError('');
     inputRefs.current[0]?.focus();
     setFocusedIndex(0);
-    Alert.alert(
-      'Código reenviado',
-      `Um novo código mock foi enviado para ${displayEmail || 'seu e-mail'}. Use 0000 para testar.`,
-    );
+    
+    try {
+      await authService.requestPasswordReset(displayEmail);
+      Alert.alert(
+        'Código reenviado',
+        `Um novo código foi enviado para ${displayEmail || 'seu e-mail'}.`
+      );
+    } catch {
+      Alert.alert('Erro', 'Não foi possível reenviar o código. Tente novamente mais tarde.');
+    }
   };
 
-  const handleContinue = () => {
+  const handleContinue = async () => {
     if (code.length < CODE_LENGTH) {
       setError('Digite o código completo');
       return;
     }
 
-    if (code !== MOCK_RECOVERY_CODE) {
-      setError('Código inválido. Use 0000 para testes.');
-      return;
-    }
+    setError('');
+    setIsLoading(true);
 
-    setVerifiedEmail(displayEmail);
-    router.push('/(auth)/forgot-password/new-password' as Href);
+    try {
+      const data = await authService.verifyResetCode(displayEmail, code);
+      
+      setVerifiedCode(displayEmail, data.reset_token);
+      
+      router.push('/(auth)/forgot-password/new-password' as Href);
+    } catch (err: any) {
+      setError(err.response?.data?.detail || 'Código inválido ou expirado.');
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   return (
@@ -103,6 +115,7 @@ export default function ForgotPasswordCodeScreen() {
         style={styles.backButton}
         onPress={() => router.back()}
         accessibilityLabel="Voltar"
+        disabled={isLoading}
       >
         <Feather name="arrow-left" size={24} color={tokens.colors.text.primary} />
       </Pressable>
@@ -139,6 +152,7 @@ export default function ForgotPasswordCodeScreen() {
                 maxLength={1}
                 selectTextOnFocus
                 selectionColor={tokens.colors.primary[500]}
+                editable={!isLoading}
               />
             );
           })}
@@ -146,15 +160,22 @@ export default function ForgotPasswordCodeScreen() {
 
         {error ? <Text style={styles.errorText}>{error}</Text> : null}
 
-        <Pressable onPress={handleResend} style={styles.resendButton}>
-          <Text style={styles.resendText}>Reenviar código</Text>
+        <Pressable 
+          onPress={handleResend} 
+          style={styles.resendButton}
+          disabled={isLoading}
+        >
+          <Text style={[styles.resendText, isLoading && { opacity: 0.5 }]}>
+            Reenviar código
+          </Text>
         </Pressable>
 
         <Button
-          title="Continuar"
+          title={isLoading ? "Verificando..." : "Continuar"}
           onPress={handleContinue}
           size="lg"
           style={styles.primaryButton}
+          disabled={isLoading}
         />
       </View>
     </KeyboardAvoidingView>

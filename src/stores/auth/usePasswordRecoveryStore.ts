@@ -2,20 +2,20 @@ import { create } from 'zustand';
 
 interface PasswordRecoveryState {
   email: string | null;
-  isCodeVerified: boolean;
-  setVerifiedEmail: (email: string) => void;
+  resetToken: string | null;
+  setVerifiedCode: (email: string, resetToken: string) => void;
   clear: () => void;
 }
 
 export const usePasswordRecoveryStore = create<PasswordRecoveryState>()((set) => ({
   email: null,
-  isCodeVerified: false,
+  resetToken: null,
 
-  setVerifiedEmail: (email) => {
-    set({ email, isCodeVerified: true });
+  setVerifiedCode: (email, resetToken) => {
+    set({ email, resetToken });
   },
 
   clear: () => {
-    set({ email: null, isCodeVerified: false });
+    set({ email: null, resetToken: null });
   },
 }));
