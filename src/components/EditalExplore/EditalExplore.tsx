@@ -18,7 +18,7 @@ export default function EditalExplore({ title }: EditalExploreProps) {
 
 const styles = StyleSheet.create({
     container: {
-        padding: 16,
+        padding: 15,
     },
     title: {
         fontSize: 18,
