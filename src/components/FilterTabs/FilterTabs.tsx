@@ -1,21 +1,28 @@
-import { View, Text, StyleSheet } from 'react-native';
+import { View, Text, StyleSheet, Pressable } from 'react-native';
+import { useOpportunities } from '@/hooks/useOpportunities';
+import type { FilterTab } from '@/stores/opportunities/types';
 
-const tabs = ['Pra você', 'Região', 'Valor', 'Prazo'];
+const tabs: FilterTab[] = ['Pra você', 'Região', 'Valor', 'Prazo'];
 
 export function FilterTabs() {
+    const { activeTab, changeTab } = useOpportunities();
+
     return (
         <View style={styles.wrapper}>
             <View style={styles.container}>
                 {tabs.map((tab, index) => {
-                    const isActive = index === 0;
+                    const isActive = activeTab === tab;
 
                     return (
                         <View key={tab} style={styles.tabWrapper}>
-                            <View style={[styles.tab, isActive && styles.activeTab]}>
+                            <Pressable 
+                                onPress={() => changeTab(tab)}
+                                style={[styles.tab, isActive && styles.activeTab]}
+                            >
                                 <Text style={[styles.text, isActive && styles.activeText]}>
                                     {tab}
                                 </Text>
-                            </View>
+                            </Pressable>
 
                             {index < tabs.length - 1 && <View style={styles.separator} />}
                         </View>

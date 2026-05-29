@@ -11,12 +11,14 @@ import {
 import { Ionicons } from '@expo/vector-icons';
 
 import Button from '@/components/Button/Button';
+import CardCompatibility from '@/components/CardCompatibility/CardCompatibility'; // Importado para usar a compatibilidade
 import { tokens } from '@/theme';
-import type { Opportunity } from '@/types/opportunity';
+import type { OpportunityDetail } from '@/types/opportunity';
+import { useOpportunities } from '@/hooks/useOpportunities';
 
 interface EditalDetailsModalProps {
     visible: boolean;
-    opportunity: Opportunity | null;
+    opportunity: OpportunityDetail | null;
     onClose: () => void;
     onToggleFavorite: (id: string) => void;
     onFollow: (id: string) => void;
@@ -37,13 +39,14 @@ export function EditalDetailsModal({
     onClose,
     onToggleFavorite,
     onFollow,
-    onOpenExternal,
 }: EditalDetailsModalProps) {
+    const { openExternalLink } = useOpportunities();
+
     if (!opportunity) {
         return null;
     }
 
-    const formattedValue = opportunity.estimatedValue.toLocaleString('pt-BR', {
+    const formattedValue = Number(opportunity.estimatedValue).toLocaleString('pt-BR', {
         style: 'currency',
         currency: 'BRL',
     });
@@ -97,7 +100,9 @@ export function EditalDetailsModal({
                             size={15}
                             color={tokens.colors.text.secondary}
                         />
-                        <Text style={styles.infoText}>{opportunity.company}</Text>
+                        <Text style={styles.infoText}>
+                            {opportunity.agency?.name || opportunity.company}
+                        </Text>
                     </View>
 
                     <View style={styles.infoRow}>
@@ -124,6 +129,12 @@ export function EditalDetailsModal({
 
                     <View style={styles.divider} />
 
+                    {opportunity.compatibility && (
+                        <View style={{ marginBottom: tokens.spacing.lg }}>
+                            <CardCompatibility title={opportunity.compatibility.label} />
+                        </View>
+                    )}
+
                     <View style={styles.summaryHeader}>
                         <Ionicons
                             name="sparkles"
@@ -132,11 +143,11 @@ export function EditalDetailsModal({
                         />
                         <Text style={styles.summaryTitle}>RESUMO SIMPLIFICADO</Text>
                     </View>
-                    <Text style={styles.summaryText}>{opportunity.simplifiedSummary}</Text>
+                    <Text style={styles.summaryText}>{opportunity.description}</Text>
 
                     <View style={styles.divider} />
 
-                    <Text style={styles.descriptionText}>{opportunity.fullDescription}</Text>
+                    <Text style={styles.descriptionText}>{opportunity.objectFull}</Text>
 
                     <View style={styles.divider} />
 
@@ -149,15 +160,15 @@ export function EditalDetailsModal({
 
                     <Text style={styles.sectionLabel}>Categorias</Text>
                     <View style={styles.chipsRow}>
-                        {opportunity.categories.map((category) => (
-                            <Chip key={category} label={category} />
+                        {opportunity.categories?.map((category) => (
+                            <Chip key={category.id} label={category.name} />
                         ))}
                     </View>
                 </ScrollView>
 
                 <View style={styles.footer}>
                     <Pressable
-                        onPress={() => onOpenExternal?.(opportunity.id)}
+                        onPress={() => openExternalLink(opportunity.pncpUrl || opportunity.id)}
                         style={({ pressed }) => [
                             styles.externalButton,
                             pressed && styles.externalButtonPressed,

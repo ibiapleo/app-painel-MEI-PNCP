@@ -10,6 +10,7 @@ interface OpportunityCardProps {
     value: string;
     daysRemaining: string;
     isFavorite: boolean;
+    compatibilityLabel: string; 
     onToggleFavorite: () => void;
     onPress?: () => void;
 }
@@ -22,6 +23,7 @@ export function OpportunityCard({
     value,
     daysRemaining,
     isFavorite,
+    compatibilityLabel, 
     onToggleFavorite,
     onPress,
 }: OpportunityCardProps) {
@@ -31,7 +33,8 @@ export function OpportunityCard({
             style={({ pressed }) => [styles.card, pressed && onPress ? styles.cardPressed : null]}
         >
             <View style={styles.top}>
-                <CompatibilityBadge title="Altamente Compatível" />
+                {/* 👈 Passando o valor dinâmico em vez de "Altamente Compatível" fixo */}
+                <CompatibilityBadge title={compatibilityLabel} />
 
                 <Pressable onPress={onToggleFavorite} hitSlop={10}>
                     <Ionicons
