@@ -15,7 +15,6 @@ export async function resetAuthStateForDevReload(): Promise<void> {
     user: null,
     isAuthenticated: false,
     isLoading: false,
-    sessionExpiresAt: null,
     _hasHydrated: true,
   });
 }
