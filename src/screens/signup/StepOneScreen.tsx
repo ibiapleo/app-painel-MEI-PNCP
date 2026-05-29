@@ -5,14 +5,14 @@ import { globalStyles, tokens } from '@/theme';
 import StepIndicator from "@/components/StepIndicator/StepIndicator";
 import SearchComponent from "@/components/SearchComponent/SearchComponent";
 import Button from "@/components/Button/Button";
-import { type IBGEState } from "@/services/ibge";
+import { type LocationState } from "@/services/authService";
 import { useSignup } from "../../hooks/useSignup";
 
 export default function StepOneScreen() {
     const signup = useSignup('step1');
     const { filteredStates, loadingStates, searchText, setSearchText, selectedStates, toggleState, handleNext } = signup.step1;
 
-    const renderState = ({ item }: { item: IBGEState }) => {
+    const renderState = ({ item }: { item: LocationState }) => {
         const isSelected = selectedStates.includes(item.id);
         return (
             <TouchableOpacity

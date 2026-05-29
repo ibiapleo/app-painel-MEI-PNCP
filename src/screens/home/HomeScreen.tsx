@@ -39,7 +39,7 @@ export default function HomeScreen() {
             setIsFetchingDetail(true);
             const detail = await getOpportunityDetail(id);
             setSelectedDetail(detail);
-        } catch (err) {
+        } catch (_error) {
             Alert.alert('Erro', 'Não foi possível carregar os detalhes do edital.');
         } finally {
             setIsFetchingDetail(false);

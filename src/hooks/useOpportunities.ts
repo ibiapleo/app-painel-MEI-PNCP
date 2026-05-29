@@ -30,7 +30,7 @@ export function useOpportunities() {
       } else {
         Alert.alert('Erro', 'Seu dispositivo não suporta a abertura deste link.');
       }
-    } catch (error) {
+    } catch (_error) {
       Alert.alert('Erro', 'Ocorreu um problema ao tentar abrir o navegador.');
     }
   };

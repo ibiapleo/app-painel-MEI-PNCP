@@ -74,7 +74,7 @@ export function useSignup(step: SignupStep) {
                     
                     setDraftField('cnaes', allCnaes);
                     clearError('cnpj');
-                } catch (e) {
+                } catch (_error) {
                     setDraftField('cnaes', []);
                     setError('cnpj', 'CNPJ não encontrado ou erro na busca.');
                 } finally {
