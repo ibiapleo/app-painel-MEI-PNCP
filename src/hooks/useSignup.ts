@@ -1,220 +1,254 @@
 import { useEffect, useMemo, useState } from 'react';
+import { Alert } from 'react-native';
 import { useRouter } from 'expo-router';
-import { TextInputProps } from 'react-native';
 
-import { fetchStates, type IBGEState } from '@/services/ibge';
-import { useSignupStore } from '@/stores/signup/useSignupStore';
+import { authService, locationService, type LocationState } from '@/services/authService';
+import { useSignupStore } from '@/stores/auth/useSignUpStore';
 
-type SignupStep = 'step1' | 'step2' | 'step3';
+export type SignupStep = 'step1' | 'step2' | 'step3';
 
-export type SignupField = {
-	id: string;
-	label: string;
-	value: string;
-	placeholder: string;
-	keyboardType?: TextInputProps['keyboardType'];
-	secureTextEntry?: boolean;
-	error?: string;
-	onChangeText: (text: string) => void;
-	onBlur?: () => void;
-};
-
-function isValidEmail(value: string) {
-	return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
+export function isValidEmail(value: string) {
+    return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-function isValidCpf(value: string) {
-	const digits = value.replace(/\D/g, '');
-	return digits.length === 11;
+export function isValidCpf(value: string) {
+    const digits = value.replace(/\D/g, '');
+    return digits.length === 11;
 }
 
-function isValidCnpj(value: string) {
-	const digits = value.replace(/\D/g, '');
-	return digits.length === 14;
+export function isValidCnpj(value: string) {
+    const digits = value.replace(/\D/g, '');
+    return digits.length === 14;
 }
 
-function formatCpf(value: string) {
-	const digits = value.replace(/\D/g, '').slice(0, 11);
-	return digits
-		.replace(/(\d{3})(\d)/, '$1.$2')
-		.replace(/(\d{3})(\d)/, '$1.$2')
-		.replace(/(\d{3})(\d{1,2})$/, '$1-$2');
+export function formatCpf(value: string) {
+    const digits = value.replace(/\D/g, '').slice(0, 11);
+    return digits
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d)/, '$1.$2')
+        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
-function formatCnpj(value: string) {
-	const digits = value.replace(/\D/g, '').slice(0, 14);
-	return digits
-		.replace(/^(\d{2})(\d)/, '$1.$2')
-		.replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
-		.replace(/\.(\d{3})(\d)/, '.$1/$2')
-		.replace(/(\d{4})(\d)/, '$1-$2');
+export function formatCnpj(value: string) {
+    const digits = value.replace(/\D/g, '').slice(0, 14);
+    return digits
+        .replace(/^(\d{2})(\d)/, '$1.$2')
+        .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+        .replace(/\.(\d{3})(\d)/, '.$1/$2')
+        .replace(/(\d{4})(\d)/, '$1-$2');
 }
 
 export function useSignup(step: SignupStep) {
-	const router = useRouter();
-	const draft = useSignupStore((state) => state.draft);
-	const setDraftField = useSignupStore((state) => state.setDraftField);
-	const toggleSelectedState = useSignupStore((state) => state.toggleSelectedState);
-	const completeRegistration = useSignupStore((state) => state.completeRegistration);
+    const router = useRouter();
 
-	const [states, setStates] = useState<IBGEState[]>([]);
-	const [loadingStates, setLoadingStates] = useState(true);
-	const [searchText, setSearchText] = useState('');
+    const {
+        draft,
+        errors,
+        setDraftField,
+        setError,
+        clearError,
+        toggleSelectedState,
+        completeRegistration
+    } = useSignupStore();
 
-	const [cpfError, setCpfError] = useState('');
-	const [cnpjError, setCnpjError] = useState('');
-	const [emailError, setEmailError] = useState('');
-	const [showPassword, setShowPassword] = useState(false);
-	const [focusedField, setFocusedField] = useState<string | null>(null);
-
-	const { selectedStates, name, cpf, cnpj, email, password } = draft;
+    const [states, setStates] = useState<LocationState[]>([]);
+    const [loadingStates, setLoadingStates] = useState(true);
+    const [searchText, setSearchText] = useState('');
+    const [isSubmitting, setIsSubmitting] = useState(false);
+	const [loadingCnaes, setLoadingCnaes] = useState(false);
 
 	useEffect(() => {
-		if (step !== 'step1') {
-			return;
-		}
+        if (step !== 'step2') return;
 
-		async function loadStates() {
-			setLoadingStates(true);
-			const data = await fetchStates();
-			setStates(data);
-			setLoadingStates(false);
-		}
+        const rawCnpj = draft.cnpj.replace(/\D/g, '');
 
-		loadStates();
-	}, [step]);
+        if (rawCnpj.length === 14 && isValidCnpj(draft.cnpj)) {
+            const fetchCnaes = async () => {
+                setLoadingCnaes(true);
+                try {
+                    const data = await authService.getCnaesByCnpj(rawCnpj);
+                    
+                    const allCnaes = [];
+                    if (data.primary_cnae) allCnaes.push(data.primary_cnae);
+                    if (data.secondary_cnaes?.length) allCnaes.push(...data.secondary_cnaes);
+                    
+                    setDraftField('cnaes', allCnaes);
+                    clearError('cnpj');
+                } catch (e) {
+                    setDraftField('cnaes', []);
+                    setError('cnpj', 'CNPJ não encontrado ou erro na busca.');
+                } finally {
+                    setLoadingCnaes(false);
+                }
+            };
+            fetchCnaes();
+        } else if (rawCnpj.length < 14 && draft.cnaes.length > 0) {
+            setDraftField('cnaes', []);
+        }
+    }, [draft.cnpj, step]);
 
-	const filteredStates = useMemo(() => {
-		if (step !== 'step1' || !searchText.trim()) {
-			return step === 'step1' ? states : [];
-		}
+    useEffect(() => {
+        if (step !== 'step1') return;
+        async function loadStates() {
+            setLoadingStates(true);
+            try {
+                const data = await locationService.getStates();
+                setStates(data);
+            } catch (error) {
+                console.error("Erro ao buscar estados do backend:", error);
+            } finally {
+                setLoadingStates(false);
+            }
+        }
+        loadStates();
+    }, [step]);
 
-		const query = searchText.toLowerCase();
-		return states.filter((state) => state.nome.toLowerCase().includes(query));
-	}, [searchText, states, step]);
+    const filteredStates = useMemo(() => {
+        if (step !== 'step1' || !searchText.trim()) return states;
+        const query = searchText.toLowerCase();
+        
+        return states.filter((state) => state.nome.toLowerCase().includes(query));
+    }, [searchText, states, step]);
 
-	const step2Fields = useMemo<SignupField[]>(
-		() => [
-			{
-				id: 'name',
-				label: 'Nome',
-				value: name,
-				placeholder: 'Seu nome',
-				keyboardType: 'default',
-				onChangeText: (text) => setDraftField('name', text),
-			},
-			{
-				id: 'cpf',
-				label: 'CPF',
-				value: cpf,
-				placeholder: '000.000.000-00',
-				keyboardType: 'number-pad',
-				error: cpfError,
-				onChangeText: (text) => {
-					setDraftField('cpf', formatCpf(text));
-					setCpfError('');
-				},
-				onBlur: () => {
-					setCpfError(isValidCpf(cpf) ? '' : 'Digite um CPF válido');
-				},
-			},
-			{
-				id: 'cnpj',
-				label: 'CNPJ',
-				value: cnpj,
-				placeholder: 'XX.XXX.XXX/0001-XX',
-				keyboardType: 'number-pad',
-				error: cnpjError,
-				onChangeText: (text) => {
-					setDraftField('cnpj', formatCnpj(text));
-					setCnpjError('');
-				},
-				onBlur: () => {
-					setCnpjError(isValidCnpj(cnpj) ? '' : 'Digite um CNPJ válido');
-				},
-			},
-		],
-		[cpf, cpfError, cnpj, cnpjError, name, setDraftField],
-	);
+    const handleCpfBlur = () => {
+        if (draft.cpf) {
+            if (isValidCpf(draft.cpf)) {
+                clearError('cpf');
+            } else {
+                setError('cpf', 'Digite um CPF válido');
+            }
+        }
+    };
 
-	const handleEmailChange = (text: string) => {
-		setDraftField('email', text);
-		if (emailError) {
-			setEmailError('');
-		}
-	};
+    const handleCnpjBlur = () => {
+        if (draft.cnpj) {
+            if (isValidCnpj(draft.cnpj)) {
+                clearError('cnpj');
+            } else {
+                setError('cnpj', 'Digite um CNPJ válido');
+            }
+        }
+    };
 
-	const handleEmailBlur = () => {
-		if (email.trim() && !isValidEmail(email)) {
-			setEmailError('Digite um email válido');
-		}
-	};
+    const handleStepTwoNext = () => {
+        const cpfIsValid = isValidCpf(draft.cpf);
+        const cnpjIsValid = isValidCnpj(draft.cnpj);
 
-	const handlePasswordChange = (text: string) => {
-		setDraftField('password', text);
-	};
+        if (!cpfIsValid) setError('cpf', 'Digite um CPF válido');
+        if (!cnpjIsValid) setError('cnpj', 'Digite um CNPJ válido');
 
-	const handleStepOneNext = () => {
-		router.push('/(signup)/step2' as any);
-	};
+        if (!cpfIsValid || !cnpjIsValid) return false;
 
-	const handleStepTwoNext = () => {
-		const cpfIsValid = isValidCpf(cpf);
-		const cnpjIsValid = isValidCnpj(cnpj);
+        router.push('/(signup)/step3' as any);
+        return true;
+    };
 
-		setCpfError(cpfIsValid ? '' : 'Digite um CPF válido');
-		setCnpjError(cnpjIsValid ? '' : 'Digite um CNPJ válido');
+    const handleEmailBlur = () => {
+        if (draft.email.trim()) {
+            if (isValidEmail(draft.email)) {
+                clearError('email');
+            } else {
+                setError('email', 'Digite um email válido');
+            }
+        }
+    };
 
-		if (!cpfIsValid || !cnpjIsValid) {
-			return false;
-		}
+    const handleStepThreeNext = async () => {
+        if (!isValidEmail(draft.email)) {
+            setError('email', 'Digite um email válido');
+            return false;
+        }
 
-		router.push('/(signup)/step3' as any);
-		return true;
-	};
+        if (!draft.password || draft.password.length < 6) {
+            Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres.");
+            return false;
+        }
 
-	const handleStepThreeNext = () => {
-		if (!isValidEmail(email)) {
-			setEmailError('Digite um email válido');
-			return false;
-		}
+        setIsSubmitting(true);
 
-		setEmailError('');
-		completeRegistration();
-		router.push('/(signup)/success' as any);
-		return true;
-	};
+        try {
+            const isEmailAvailable = await authService.checkEmail(draft.email);
+            if (!isEmailAvailable) {
+                setError('email', 'Este e-mail já está em uso.');
+                setIsSubmitting(false);
+                return false;
+            }
 
-	return {
-		step1: {
-			states,
-			selectedStates,
-			filteredStates,
-			loadingStates,
-			searchText,
-			setSearchText,
-			toggleState: toggleSelectedState,
-			handleNext: handleStepOneNext,
-		},
-		step2: {
-			fields: step2Fields,
-			focusedField,
-			setFocusedField,
-			handleNext: handleStepTwoNext,
-		},
-		step3: {
-			email,
-			setEmail: handleEmailChange,
-			emailError,
-			emailBlur: handleEmailBlur,
-			password,
-			setPassword: handlePasswordChange,
-			passwordSecureTextEntry: !showPassword,
-			focusedField,
-			setFocusedField,
-			showPassword,
-			togglePasswordVisibility: () => setShowPassword((current) => !current),
-			handleNext: handleStepThreeNext,
-		},
-	};
+            const rawCnpj = draft.cnpj.replace(/\D/g, '');
+
+            await authService.registerMei({
+                name: draft.name,
+                email: draft.email,
+                password: draft.password,
+                cnpj: rawCnpj,
+                interested_state_ids: draft.selectedStates,
+                cnae_ids: draft.cnaes.map(cnae => cnae.id),
+            });
+
+            completeRegistration();
+            router.push('/(signup)/success' as any);
+            return true;
+        } catch (error: any) {
+            console.log("=== ERRO CAPTURADO NO TRY/CATCH ===");
+            
+            let errorMessage = 'Erro ao realizar cadastro. Tente novamente.';
+
+            if (error.response?.data?.detail) {
+                const detail = error.response.data.detail;
+                
+                if (Array.isArray(detail)) {
+                    const fieldName = detail[0].loc[detail[0].loc.length - 1]; 
+                    const validationMsg = detail[0].msg;
+                    
+                    errorMessage = `O campo '${fieldName}' está inválido: ${validationMsg}`;
+                    console.log("🚨 ERRO 422 (PYDANTIC):", JSON.stringify(detail, null, 2));
+                } 
+                else if (typeof detail === 'string') {
+                    errorMessage = detail;
+                    console.log("🚨 ERRO DA API:", detail);
+                }
+            } else {
+                console.log("🚨 ERRO DESCONHECIDO:", error.message);
+            }
+            
+            console.log("===================================");
+
+            Alert.alert('Atenção', errorMessage);
+            return false;
+        } finally {
+            setIsSubmitting(false);
+        }
+    };
+
+    return {
+        step1: {
+            states,
+            selectedStates: draft.selectedStates,
+            filteredStates,
+            loadingStates,
+            searchText,
+            setSearchText,
+            toggleState: toggleSelectedState,
+            handleNext: () => router.push('/(signup)/step2' as any),
+        },
+        step2: {
+            draft,
+            errors,
+            setDraftField,
+            handleCpfBlur,
+            handleCnpjBlur,
+            handleNext: handleStepTwoNext,
+            formatCpf,
+            formatCnpj,
+			loadingCnaes
+        },
+        step3: {
+            draft,
+            errors,
+            setDraftField,
+            handleEmailBlur,
+            handleNext: handleStepThreeNext,
+            isSubmitting,
+        },
+    };
 }
