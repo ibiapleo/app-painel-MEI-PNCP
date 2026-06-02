@@ -1,4 +1,3 @@
-import { useState } from 'react';
 import { StyleSheet, Text, View } from 'react-native';
 
 import SettingsMenuButton from "@/components/SettingsMenuButton/SettingsMenuButton";
