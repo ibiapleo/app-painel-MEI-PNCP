@@ -1,9 +1,19 @@
-import {StyleSheet, Text, View} from 'react-native';
+import { useState } from 'react';
+import { StyleSheet, Text, View } from 'react-native';
+
+import SettingsMenuButton from "@/components/SettingsMenuButton/SettingsMenuButton";
+import LogOutModal from "@/components/LogOutModal/LogOutModal";
 
 import { tokens } from '@/theme';
-import SettingsMenuButton from "@/components/SettingsMenuButton/SettingsMenuButton";
 
 export default function SettingsScreen() {
+  const [modalVisible, setModalVisible] = useState(false);
+
+  const handleLogOut = () => {
+    console.log('Usuário deslogado');
+    setModalVisible(false);
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -30,7 +40,16 @@ export default function SettingsScreen() {
         <SettingsMenuButton title="Privacidade e Segurança" />
         <View style={styles.line} />
 
-        <SettingsMenuButton title="Sair" />
+        <SettingsMenuButton
+          title="Sair"
+          onPress={() => setModalVisible(true)}
+        />
+
+        <LogOutModal
+          visible={modalVisible}
+          onCancel={() => setModalVisible(false)}
+          onLogOut={handleLogOut}
+        />
       </View>
     </View>
   );
