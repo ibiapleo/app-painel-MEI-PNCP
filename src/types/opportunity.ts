@@ -8,6 +8,7 @@ export interface Opportunity {
     daysRemaining: number;
     compatibilityLabel: string;
     isFavorite: boolean;
+    closingDate?: string;
 }
 
 export interface OpportunityCategory {

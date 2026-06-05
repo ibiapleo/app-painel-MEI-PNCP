@@ -61,6 +61,20 @@ export default function TabsLayout() {
               ),
             }}
           />
+        
+          <Tabs.Screen
+              name="painel"
+              options={{
+                  title: 'Painel',
+                  tabBarIcon: ({ color, focused }) => (
+                      <Ionicons
+                          name={focused ? 'grid' : 'grid-outline'}
+                          size={22}
+                          color={color}
+                      />
+                  ),
+              }}
+          />
         </Tabs>
     );
 }
