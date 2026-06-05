@@ -48,9 +48,9 @@ export default function HomeScreen() {
 
     return (
         <View style={styles.container}>
-            <SearchHeader 
-                notificationCount={notificationCount} 
-                onSearch={handleSearch} 
+            <SearchHeader
+                notificationCount={notificationCount}
+                onSearch={handleSearch}
             />
             <FilterTabs />
 
