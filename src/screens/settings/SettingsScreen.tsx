@@ -5,13 +5,15 @@ import SettingsMenuButton from "@/components/SettingsMenuButton/SettingsMenuButt
 import LogOutModal from "@/components/LogOutModal/LogOutModal";
 
 import { tokens } from '@/theme';
+import { useAuthStore } from '@/stores/auth/useAuthStore';
 
 export default function SettingsScreen() {
   const [modalVisible, setModalVisible] = useState(false);
+  const logout = useAuthStore((state) => state.logout);
 
-  const handleLogOut = () => {
-    console.log('Usuário deslogado');
+  const handleLogOut = async () => {
     setModalVisible(false);
+    await logout();
   };
 
   return (
