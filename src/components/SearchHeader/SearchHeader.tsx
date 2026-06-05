@@ -1,12 +1,13 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { Text, View, StyleSheet, TextInput } from 'react-native';
+import { Pressable, Text, View, StyleSheet, TextInput } from 'react-native';
 
 interface SearchHeaderProps {
     notificationCount: number;
     onSearch?: (text: string) => void;
+    onPressFavorites?: () => void;
 }
 
-export function SearchHeader({ notificationCount, onSearch }: SearchHeaderProps) {
+export function SearchHeader({ notificationCount, onSearch, onPressFavorites }: SearchHeaderProps) {
     const hasNotifications = notificationCount > 0;
 
     return (
@@ -26,7 +27,9 @@ export function SearchHeader({ notificationCount, onSearch }: SearchHeaderProps)
                 <Feather name="sliders" size={18} color="#202124" />
             </View>
 
-            <Feather name="heart" size={28} color="#202124" />
+            <Pressable onPress={onPressFavorites} hitSlop={10}>
+                <Feather name="heart" size={28} color="#202124" />
+            </Pressable>
 
             <View style={styles.notificationWrapper}>
                 <Ionicons name="notifications-outline" size={27} color="#202124" />

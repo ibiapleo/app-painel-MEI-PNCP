@@ -39,3 +39,8 @@ export async function getOpportunitiesByTerm(page = 1, pageSize = 20): Promise<P
     const response = await api.get('/opportunities/term', { params: { page, pageSize } });
     return response.data;
 }
+
+export async function getFavoriteOpportunities(page = 1, pageSize = 50): Promise<PaginatedOpportunities> {
+    const response = await api.get('/opportunities/favorites/list', { params: { page, pageSize } });
+    return response.data;
+}

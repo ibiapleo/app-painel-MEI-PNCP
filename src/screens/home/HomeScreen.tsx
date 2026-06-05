@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { ActivityIndicator, ScrollView, StyleSheet, Text, View, Alert } from 'react-native';
+import { router } from 'expo-router';
 
 import { EditalDetailsModal } from '@/components/EditalDetailsModal/EditalDetailsModal';
 import { FilterTabs } from '@/components/FilterTabs/FilterTabs';
@@ -9,6 +10,14 @@ import { useOpportunities } from '@/hooks/useOpportunities';
 import { useNotifications } from '@/hooks/useNotifications';
 import { getOpportunityDetail } from '@/services/opportunitiesService';
 import type { OpportunityDetail } from '@/types/opportunity';
+
+function formatDaysRemaining(days: number): string {
+    if (days < 0) return 'Encerrado';
+    if (days === 0) return 'Encerra hoje';
+    if (days === 1) return '1 dia restante';
+    return `${days} dias restantes`;
+}
+
 
 let searchTimeout: ReturnType<typeof setTimeout>;
 
@@ -48,9 +57,10 @@ export default function HomeScreen() {
 
     return (
         <View style={styles.container}>
-            <SearchHeader 
-                notificationCount={notificationCount} 
-                onSearch={handleSearch} 
+            <SearchHeader
+                notificationCount={notificationCount}
+                onSearch={handleSearch}
+                onPressFavorites={() => router.push('/(tabs)/painel')}
             />
             <FilterTabs />
 
@@ -81,7 +91,7 @@ export default function HomeScreen() {
                                 style: 'currency',
                                 currency: 'BRL',
                             })}
-                            daysRemaining={`${opportunity.daysRemaining} dias restantes`}
+                            daysRemaining={formatDaysRemaining(opportunity.daysRemaining)}
                             isFavorite={opportunity.isFavorite}
                             compatibilityLabel={opportunity.compatibilityLabel}
                             onToggleFavorite={() => toggleFavorite(opportunity.id)}
