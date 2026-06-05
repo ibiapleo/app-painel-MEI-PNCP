@@ -1,4 +1,4 @@
-import { StyleSheet, Text, TouchableOpacity, Modal, View } from "react-native";
+import { StyleSheet, Text, Modal, View } from "react-native";
 import { tokens } from "@/theme";
 
 import Button from "@/components/Button/Button";

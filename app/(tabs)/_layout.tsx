@@ -12,7 +12,7 @@ export default function TabsLayout() {
         if (!isAuthenticated) {
             router.replace('/(auth)/login');
         }
-    }, [isAuthenticated]);
+    }, [isAuthenticated, router]);
 
     return (
         <Tabs
