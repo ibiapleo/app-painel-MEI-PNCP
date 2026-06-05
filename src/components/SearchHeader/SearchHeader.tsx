@@ -1,13 +1,14 @@
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { Text, View, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
+import { Pressable, Text, View, StyleSheet, TextInput, TouchableOpacity } from 'react-native';
 import { useRouter } from "expo-router";
 
 interface SearchHeaderProps {
     notificationCount: number;
     onSearch?: (text: string) => void;
+    onPressFavorites?: () => void;
 }
 
-export function SearchHeader({ notificationCount, onSearch }: SearchHeaderProps) {
+export function SearchHeader({ notificationCount, onSearch, onPressFavorites }: SearchHeaderProps) {
     const router = useRouter();
     const hasNotifications = notificationCount > 0;
 
@@ -32,7 +33,9 @@ export function SearchHeader({ notificationCount, onSearch }: SearchHeaderProps)
                 <Feather name="sliders" size={18} color="#202124" />
             </View>
 
-            <Feather name="heart" size={28} color="#202124" />
+            <Pressable onPress={onPressFavorites} hitSlop={10}>
+                <Feather name="heart" size={28} color="#202124" />
+            </Pressable>
 
             <TouchableOpacity onPress={handleNotificationPress}>
                 <View style={styles.notificationWrapper}>
