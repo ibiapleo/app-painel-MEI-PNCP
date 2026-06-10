@@ -11,12 +11,23 @@ import { useOpportunities } from '@/hooks/useOpportunities';
 import { useNotifications } from '@/hooks/useNotifications';
 import { getOpportunityDetail } from '@/services/opportunitiesService';
 import {
-    countActiveFilters,
     useFiltersStore,
     VALUE_RANGE_MAX,
     VALUE_RANGE_MIN,
 } from '@/stores/filters/useFiltersStore';
 import type { OpportunityDetail } from '@/types/opportunity';
+
+const UF_BY_STATE: Record<string, string> = {
+    'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM',
+    'Bahia': 'BA', 'Ceará': 'CE', 'Distrito Federal': 'DF',
+    'Espírito Santo': 'ES', 'Goiás': 'GO', 'Maranhão': 'MA',
+    'Mato Grosso': 'MT', 'Mato Grosso do Sul': 'MS', 'Minas Gerais': 'MG',
+    'Pará': 'PA', 'Paraíba': 'PB', 'Paraná': 'PR', 'Pernambuco': 'PE',
+    'Piauí': 'PI', 'Rio de Janeiro': 'RJ', 'Rio Grande do Norte': 'RN',
+    'Rio Grande do Sul': 'RS', 'Rondônia': 'RO', 'Roraima': 'RR',
+    'Santa Catarina': 'SC', 'São Paulo': 'SP', 'Sergipe': 'SE',
+    'Tocantins': 'TO',
+};
 
 function formatDaysRemaining(days: number): string {
     if (days < 0) return 'Encerrado';
@@ -39,15 +50,22 @@ export default function HomeScreen() {
     } = useOpportunities();
 
     const { notificationCount } = useNotifications();
-    const filters = useFiltersStore();
-    const activeFilterCount = countActiveFilters(filters);
+
+    const categories = useFiltersStore((s) => s.categories);
+    const regions = useFiltersStore((s) => s.regions);
+    const valueMin = useFiltersStore((s) => s.valueMin);
+    const valueMax = useFiltersStore((s) => s.valueMax);
+
+    const activeFilterCount =
+        (categories.length > 0 ? 1 : 0) +
+        (regions.length > 0 ? 1 : 0) +
+        (valueMin > VALUE_RANGE_MIN || valueMax < VALUE_RANGE_MAX ? 1 : 0);
 
     const [selectedDetail, setSelectedDetail] = useState<OpportunityDetail | null>(null);
     const [isFetchingDetail, setIsFetchingDetail] = useState(false);
     const [isFilterOpen, setFilterOpen] = useState(false);
 
     const filteredOpportunities = useMemo(() => {
-        const { categories, regions, valueMin, valueMax } = filters;
         const hasCategory = categories.length > 0;
         const hasRegion = regions.length > 0;
         const hasValue = valueMin > VALUE_RANGE_MIN || valueMax < VALUE_RANGE_MAX;
@@ -60,15 +78,20 @@ export default function HomeScreen() {
             }
             if (hasRegion) {
                 const loc = (opp.location ?? '').toLowerCase();
-                if (!regions.some((r) => loc.includes(r.toLowerCase()))) return false;
+                const matches = regions.some((r) => {
+                    const stateLower = r.toLowerCase();
+                    const uf = UF_BY_STATE[r]?.toLowerCase();
+                    return loc.includes(stateLower) || (uf ? loc.includes(uf) : false);
+                });
+                if (!matches) return false;
             }
             if (hasCategory) {
-                const haystack = `${opp.title} ${opp.description}`.toLowerCase();
+                const haystack = `${opp.title ?? ''} ${opp.description ?? ''} ${opp.company ?? ''}`.toLowerCase();
                 if (!categories.some((c) => haystack.includes(c.toLowerCase()))) return false;
             }
             return true;
         });
-    }, [opportunities, filters]);
+    }, [opportunities, categories, regions, valueMin, valueMax]);
 
     const handleSearch = (text: string) => {
         clearTimeout(searchTimeout);
