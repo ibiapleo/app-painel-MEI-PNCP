@@ -1,7 +1,7 @@
 import { create } from 'zustand';
 
 export const VALUE_RANGE_MIN = 0;
-export const VALUE_RANGE_MAX = 500_000_000;
+export const VALUE_RANGE_MAX = 10_000_000;
 
 export interface FiltersState {
     categories: string[];
