@@ -39,6 +39,8 @@ const REGIONS = [
     'Santa Catarina', 'São Paulo', 'Sergipe', 'Tocantins',
 ];
 
+const VALOR_STEP = 100_000;
+
 interface FilterModalProps {
     visible: boolean;
     onClose: () => void;
@@ -54,8 +56,6 @@ function formatBRL(value: number): string {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 }
 
-const STEP = 1_000_000;
-
 interface ValueSliderProps {
     label: string;
     value: number;
@@ -64,31 +64,49 @@ interface ValueSliderProps {
 
 function ValueSlider({ label, value, onChange }: ValueSliderProps) {
     const [trackWidth, setTrackWidth] = useState(0);
-    const valueRef = useRef(value);
-    valueRef.current = value;
+    const startValueRef = useRef(value);
+    const trackWidthRef = useRef(trackWidth);
+    trackWidthRef.current = trackWidth;
 
-    const ratio = (value - VALUE_RANGE_MIN) / (VALUE_RANGE_MAX - VALUE_RANGE_MIN);
+    const range = VALUE_RANGE_MAX - VALUE_RANGE_MIN;
+    const ratio = (value - VALUE_RANGE_MIN) / range;
     const thumbX = Math.max(0, Math.min(1, ratio)) * trackWidth;
+
+    const snap = (n: number) => {
+        const snapped = Math.round(n / VALOR_STEP) * VALOR_STEP;
+        return Math.max(VALUE_RANGE_MIN, Math.min(VALUE_RANGE_MAX, snapped));
+    };
 
     const panResponder = useMemo(
         () =>
             PanResponder.create({
                 onStartShouldSetPanResponder: () => true,
+                onStartShouldSetPanResponderCapture: () => true,
                 onMoveShouldSetPanResponder: () => true,
+                onMoveShouldSetPanResponderCapture: () => true,
+                onPanResponderTerminationRequest: () => false,
                 onPanResponderGrant: (evt) => {
-                    if (trackWidth <= 0) return;
+                    const w = trackWidthRef.current;
+                    if (w <= 0) {
+                        startValueRef.current = value;
+                        return;
+                    }
                     const x = evt.nativeEvent.locationX;
-                    const r = Math.max(0, Math.min(1, x / trackWidth));
-                    onChange(Math.round(VALUE_RANGE_MIN + r * (VALUE_RANGE_MAX - VALUE_RANGE_MIN)));
+                    const r = Math.max(0, Math.min(1, x / w));
+                    const v = snap(VALUE_RANGE_MIN + r * range);
+                    startValueRef.current = v;
+                    onChange(v);
                 },
-                onPanResponderMove: (evt) => {
-                    if (trackWidth <= 0) return;
-                    const x = evt.nativeEvent.locationX;
-                    const r = Math.max(0, Math.min(1, x / trackWidth));
-                    onChange(Math.round(VALUE_RANGE_MIN + r * (VALUE_RANGE_MAX - VALUE_RANGE_MIN)));
+                onPanResponderMove: (_evt, gestureState) => {
+                    const w = trackWidthRef.current;
+                    if (w <= 0) return;
+                    const delta = (gestureState.dx / w) * range;
+                    onChange(snap(startValueRef.current + delta));
                 },
             }),
-        [trackWidth, onChange]
+        // panResponder doesn't need to rebuild on value change — refs handle it
+        // eslint-disable-next-line react-hooks/exhaustive-deps
+        [onChange, range]
     );
 
     const onLayout = (e: LayoutChangeEvent) => setTrackWidth(e.nativeEvent.layout.width);
@@ -99,7 +117,7 @@ function ValueSlider({ label, value, onChange }: ValueSliderProps) {
                 <Text style={styles.sliderLabel}>{label}</Text>
                 <View style={styles.stepperRow}>
                     <Pressable
-                        onPress={() => onChange(value - STEP)}
+                        onPress={() => onChange(value - VALOR_STEP)}
                         style={styles.stepperButton}
                         hitSlop={6}
                     >
@@ -107,7 +125,7 @@ function ValueSlider({ label, value, onChange }: ValueSliderProps) {
                     </Pressable>
                     <Text style={styles.stepperValue}>{formatBRL(value)}</Text>
                     <Pressable
-                        onPress={() => onChange(value + STEP)}
+                        onPress={() => onChange(value + VALOR_STEP)}
                         style={styles.stepperButton}
                         hitSlop={6}
                     >
@@ -269,7 +287,16 @@ function SectionShell({
 }
 
 function FilterModalImpl({ visible, onClose }: FilterModalProps) {
-    const filters = useFiltersStore();
+    const categories = useFiltersStore((s) => s.categories);
+    const regions = useFiltersStore((s) => s.regions);
+    const valueMin = useFiltersStore((s) => s.valueMin);
+    const valueMax = useFiltersStore((s) => s.valueMax);
+    const toggleCategory = useFiltersStore((s) => s.toggleCategory);
+    const toggleRegion = useFiltersStore((s) => s.toggleRegion);
+    const setValueMin = useFiltersStore((s) => s.setValueMin);
+    const setValueMax = useFiltersStore((s) => s.setValueMax);
+    const clearAll = useFiltersStore((s) => s.clearAll);
+
     const [expanded, setExpanded] = useState<SectionKey | null>('regiao');
 
     const toggle = (key: SectionKey) =>
@@ -285,11 +312,11 @@ function FilterModalImpl({ visible, onClose }: FilterModalProps) {
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.header}>
                     <Pressable onPress={onClose} hitSlop={10}>
-                        <Text style={styles.headerAction}>Cancel</Text>
+                        <Text style={styles.headerAction}>Cancelar</Text>
                     </Pressable>
-                    <Text style={styles.headerTitle}>Filter</Text>
-                    <Pressable onPress={filters.clearAll} hitSlop={10}>
-                        <Text style={styles.headerAction}>Clear All</Text>
+                    <Text style={styles.headerTitle}>Filtros</Text>
+                    <Pressable onPress={clearAll} hitSlop={10}>
+                        <Text style={styles.headerAction}>Limpar tudo</Text>
                     </Pressable>
                 </View>
 
@@ -301,15 +328,15 @@ function FilterModalImpl({ visible, onClose }: FilterModalProps) {
                     <CategorySection
                         expanded={expanded === 'categoria'}
                         onToggle={() => toggle('categoria')}
-                        selected={filters.categories}
-                        onSelect={filters.toggleCategory}
+                        selected={categories}
+                        onSelect={toggleCategory}
                     />
 
                     <RegionSection
                         expanded={expanded === 'regiao'}
                         onToggle={() => toggle('regiao')}
-                        selected={filters.regions}
-                        onSelect={filters.toggleRegion}
+                        selected={regions}
+                        onSelect={toggleRegion}
                     />
 
                     <SectionShell
@@ -317,27 +344,24 @@ function FilterModalImpl({ visible, onClose }: FilterModalProps) {
                         expanded={expanded === 'valor'}
                         onToggle={() => toggle('valor')}
                         count={
-                            filters.valueMin > VALUE_RANGE_MIN ||
-                            filters.valueMax < VALUE_RANGE_MAX
-                                ? 1
-                                : 0
+                            valueMin > VALUE_RANGE_MIN || valueMax < VALUE_RANGE_MAX ? 1 : 0
                         }
                     >
                         <ValueSlider
                             label="Mínimo"
-                            value={filters.valueMin}
-                            onChange={filters.setValueMin}
+                            value={valueMin}
+                            onChange={setValueMin}
                         />
                         <ValueSlider
                             label="Máximo"
-                            value={filters.valueMax}
-                            onChange={filters.setValueMax}
+                            value={valueMax}
+                            onChange={setValueMax}
                         />
                     </SectionShell>
                 </ScrollView>
 
                 <View style={styles.footer}>
-                    <Button title="Apply Filters" size="lg" onPress={onClose} style={styles.applyButton} />
+                    <Button title="Aplicar filtros" size="lg" onPress={onClose} style={styles.applyButton} />
                 </View>
             </SafeAreaView>
         </Modal>
