@@ -56,7 +56,7 @@ export function EditalDetailsModal({
             visible={visible}
             animationType="slide"
             onRequestClose={onClose}
-            presentationStyle="pageSheet"
+            presentationStyle="fullScreen"
         >
             <SafeAreaView style={styles.safeArea}>
                 <View style={styles.header}>

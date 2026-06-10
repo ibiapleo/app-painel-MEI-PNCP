@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -37,7 +38,7 @@ function buildGrid(year: number, month: number): (number | null)[] {
     return cells;
 }
 
-export function FavoritesCalendar({
+function FavoritesCalendarImpl({
     month,
     markedDates,
     onPrevMonth,
@@ -104,6 +105,8 @@ export function FavoritesCalendar({
         </View>
     );
 }
+
+export const FavoritesCalendar = memo(FavoritesCalendarImpl);
 
 const styles = StyleSheet.create({
     container: {

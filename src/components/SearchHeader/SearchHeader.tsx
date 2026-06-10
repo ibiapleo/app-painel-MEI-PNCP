@@ -6,11 +6,20 @@ interface SearchHeaderProps {
     notificationCount: number;
     onSearch?: (text: string) => void;
     onPressFavorites?: () => void;
+    onPressFilters?: () => void;
+    activeFilterCount?: number;
 }
 
-export function SearchHeader({ notificationCount, onSearch, onPressFavorites }: SearchHeaderProps) {
+export function SearchHeader({
+    notificationCount,
+    onSearch,
+    onPressFavorites,
+    onPressFilters,
+    activeFilterCount = 0,
+}: SearchHeaderProps) {
     const router = useRouter();
     const hasNotifications = notificationCount > 0;
+    const hasFilters = activeFilterCount > 0;
 
     const handleNotificationPress = () => {
         router.push('/notifications');
@@ -20,8 +29,8 @@ export function SearchHeader({ notificationCount, onSearch, onPressFavorites }: 
         <View style={styles.container}>
             <View style={styles.searchBox}>
                 <Feather name="search" size={22} color="#202124" />
-                
-                <TextInput 
+
+                <TextInput
                     style={styles.searchInput}
                     placeholder="Pesquisar editais..."
                     placeholderTextColor="#A0A0A5"
@@ -30,7 +39,14 @@ export function SearchHeader({ notificationCount, onSearch, onPressFavorites }: 
                     autoCorrect={false}
                 />
 
-                <Feather name="sliders" size={18} color="#202124" />
+                <Pressable onPress={onPressFilters} hitSlop={10} style={styles.filterWrapper}>
+                    <Feather name="sliders" size={18} color={hasFilters ? '#0877FF' : '#202124'} />
+                    {hasFilters && (
+                        <View style={styles.filterBadge}>
+                            <Text style={styles.filterBadgeText}>{activeFilterCount}</Text>
+                        </View>
+                    )}
+                </Pressable>
             </View>
 
             <Pressable onPress={onPressFavorites} hitSlop={10}>
@@ -78,6 +94,27 @@ const styles = StyleSheet.create({
         fontSize: 16,
         color: '#202124',
         padding: 0,
+    },
+    filterWrapper: {
+        position: 'relative',
+        padding: 4,
+    },
+    filterBadge: {
+        position: 'absolute',
+        top: -2,
+        right: -4,
+        minWidth: 14,
+        height: 14,
+        borderRadius: 7,
+        backgroundColor: '#0877FF',
+        alignItems: 'center',
+        justifyContent: 'center',
+        paddingHorizontal: 3,
+    },
+    filterBadgeText: {
+        color: '#FFFFFF',
+        fontSize: 9,
+        fontWeight: '700',
     },
     notificationWrapper: {
         position: 'relative',
