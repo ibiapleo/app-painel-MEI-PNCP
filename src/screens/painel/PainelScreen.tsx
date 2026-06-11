@@ -1,4 +1,4 @@
-import { useCallback, useMemo, useState } from 'react';
+import { memo, useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
     Pressable,
@@ -23,6 +23,8 @@ const MONTH_LABELS_SHORT = [
     'Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun',
     'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec',
 ];
+
+type SortOrder = 'soonest' | 'latest';
 
 function pad(n: number) {
     return n < 10 ? `0${n}` : `${n}`;
@@ -54,6 +56,85 @@ function formatSectionTitle(dayKey: string): string {
     return `${MONTH_LABELS_SHORT[m - 1]} ${d}`;
 }
 
+const PainelHeader = memo(function PainelHeader({
+    notificationCount,
+}: {
+    notificationCount: number;
+}) {
+    return (
+        <View style={styles.header}>
+            <Text style={styles.headerTitle}>Painel</Text>
+            <View style={styles.notificationWrapper}>
+                <Ionicons name="notifications-outline" size={27} color="#202124" />
+                {notificationCount > 0 && (
+                    <View style={styles.badge}>
+                        <Text style={styles.badgeText}>
+                            {notificationCount > 9 ? '9+' : notificationCount}
+                        </Text>
+                    </View>
+                )}
+            </View>
+        </View>
+    );
+});
+
+const TabsAndSort = memo(function TabsAndSort({
+    activeTab,
+    onChangeTab,
+    sortOrder,
+    onToggleSort,
+}: {
+    activeTab: FavoritesTab;
+    onChangeTab: (tab: FavoritesTab) => void;
+    sortOrder: SortOrder;
+    onToggleSort: () => void;
+}) {
+    return (
+        <View style={styles.tabsWrapper}>
+            <View style={styles.tabsContainer}>
+                {TABS.map((tab, index) => {
+                    const isActive = activeTab === tab;
+                    return (
+                        <View key={tab} style={styles.tabWrapper}>
+                            <Pressable
+                                onPress={() => onChangeTab(tab)}
+                                style={[styles.tab, isActive && styles.activeTab]}
+                            >
+                                <Text
+                                    style={[
+                                        styles.tabText,
+                                        isActive && styles.activeTabText,
+                                    ]}
+                                >
+                                    {tab}
+                                </Text>
+                            </Pressable>
+                            {index < TABS.length - 1 && (
+                                <View style={styles.tabSeparator} />
+                            )}
+                        </View>
+                    );
+                })}
+            </View>
+
+            <Pressable onPress={onToggleSort} style={styles.sortButton} hitSlop={8}>
+                <Text style={styles.sortText}>
+                    {sortOrder === 'soonest' ? 'Prazo próximo' : 'Prazo distante'}
+                </Text>
+                <Feather
+                    name={sortOrder === 'soonest' ? 'arrow-up' : 'arrow-down'}
+                    size={14}
+                    color="#0877FF"
+                />
+            </Pressable>
+        </View>
+    );
+});
+
+const SectionHeader = memo(function SectionHeader({ title }: { title: string }) {
+    return <Text style={styles.sectionHeader}>{title}</Text>;
+});
+
 export default function PainelScreen() {
     const { favorites, isLoading, error, activeTab, setActiveTab, reload } = useFavorites();
     const { notificationCount } = useNotifications();
@@ -67,7 +148,7 @@ export default function PainelScreen() {
         const now = new Date();
         return new Date(now.getFullYear(), now.getMonth(), 1);
     });
-    const [sortOrder, setSortOrder] = useState<'desc' | 'asc'>('desc');
+    const [sortOrder, setSortOrder] = useState<SortOrder>('soonest');
 
     const today = useMemo(() => startOfDay(new Date()), []);
     const displayedYear = displayedMonth.getFullYear();
@@ -123,121 +204,109 @@ export default function PainelScreen() {
         return Array.from(groups.entries())
             .sort((a, b) => {
                 if (a[0] === b[0]) return 0;
-                if (sortOrder === 'desc') return a[0] < b[0] ? 1 : -1;
-                return a[0] < b[0] ? -1 : 1;
+                // 'soonest' = ascending by date (closest first)
+                // 'latest'  = descending by date (furthest first)
+                if (sortOrder === 'soonest') return a[0] < b[0] ? -1 : 1;
+                return a[0] < b[0] ? 1 : -1;
             })
             .map(([key, data]) => ({ title: formatSectionTitle(key), data }));
     }, [favorites, closingByOpp, displayedYear, displayedMonthIdx, today, activeTab, sortOrder]);
 
-    const handlePrevMonth = () =>
-        setDisplayedMonth(new Date(displayedYear, displayedMonthIdx - 1, 1));
-    const handleNextMonth = () =>
-        setDisplayedMonth(new Date(displayedYear, displayedMonthIdx + 1, 1));
+    const handlePrevMonth = useCallback(
+        () => setDisplayedMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1)),
+        []
+    );
+    const handleNextMonth = useCallback(
+        () => setDisplayedMonth((m) => new Date(m.getFullYear(), m.getMonth() + 1, 1)),
+        []
+    );
+    const handleToggleSort = useCallback(
+        () => setSortOrder((prev) => (prev === 'soonest' ? 'latest' : 'soonest')),
+        []
+    );
+    const handleChangeTab = useCallback(
+        (tab: FavoritesTab) => setActiveTab(tab),
+        [setActiveTab]
+    );
+
+    const listHeader = useMemo(
+        () => (
+            <>
+                <FavoritesCalendar
+                    month={displayedMonth}
+                    markedDates={markedDates}
+                    onPrevMonth={handlePrevMonth}
+                    onNextMonth={handleNextMonth}
+                />
+                <TabsAndSort
+                    activeTab={activeTab}
+                    onChangeTab={handleChangeTab}
+                    sortOrder={sortOrder}
+                    onToggleSort={handleToggleSort}
+                />
+                {isLoading && (
+                    <ActivityIndicator style={styles.feedback} size="large" color="#0877FF" />
+                )}
+                {error ? <Text style={styles.error}>{error}</Text> : null}
+                {!isLoading && !error && sections.length === 0 && (
+                    <Text style={styles.emptyState}>
+                        {favorites.length === 0
+                            ? 'Você ainda não favoritou nenhum edital.'
+                            : 'Nenhum edital neste filtro para o mês selecionado.'}
+                    </Text>
+                )}
+            </>
+        ),
+        [
+            displayedMonth,
+            markedDates,
+            handlePrevMonth,
+            handleNextMonth,
+            activeTab,
+            handleChangeTab,
+            sortOrder,
+            handleToggleSort,
+            isLoading,
+            error,
+            sections.length,
+            favorites.length,
+        ]
+    );
+
+    const renderItem = useCallback(
+        ({ item }: { item: Opportunity }) => (
+            <FavoriteCard
+                title={item.title}
+                company={item.company}
+                location={item.location}
+                value={formatCurrency(item.estimatedValue)}
+                status={activeTab === 'Em andamento' ? 'em_andamento' : 'encerrado'}
+            />
+        ),
+        [activeTab]
+    );
+
+    const renderSectionHeader = useCallback(
+        ({ section }: { section: { title: string } }) => (
+            <SectionHeader title={section.title} />
+        ),
+        []
+    );
+
+    const keyExtractor = useCallback((item: Opportunity) => item.id, []);
 
     return (
         <View style={styles.container}>
-            <View style={styles.header}>
-                <Text style={styles.headerTitle}>Painel</Text>
-                <View style={styles.notificationWrapper}>
-                    <Ionicons name="notifications-outline" size={27} color="#202124" />
-                    {notificationCount > 0 && (
-                        <View style={styles.badge}>
-                            <Text style={styles.badgeText}>
-                                {notificationCount > 9 ? '9+' : notificationCount}
-                            </Text>
-                        </View>
-                    )}
-                </View>
-            </View>
+            <PainelHeader notificationCount={notificationCount} />
 
             <SectionList
                 sections={sections}
-                keyExtractor={(item) => item.id}
+                keyExtractor={keyExtractor}
                 stickySectionHeadersEnabled={false}
                 contentContainerStyle={styles.listContent}
-                ListHeaderComponent={
-                    <>
-                        <FavoritesCalendar
-                            month={displayedMonth}
-                            markedDates={markedDates}
-                            onPrevMonth={handlePrevMonth}
-                            onNextMonth={handleNextMonth}
-                        />
-
-                        <View style={styles.tabsWrapper}>
-                            <View style={styles.tabsContainer}>
-                                {TABS.map((tab, index) => {
-                                    const isActive = activeTab === tab;
-                                    return (
-                                        <View key={tab} style={styles.tabWrapper}>
-                                            <Pressable
-                                                onPress={() => setActiveTab(tab)}
-                                                style={[styles.tab, isActive && styles.activeTab]}
-                                            >
-                                                <Text
-                                                    style={[
-                                                        styles.tabText,
-                                                        isActive && styles.activeTabText,
-                                                    ]}
-                                                >
-                                                    {tab}
-                                                </Text>
-                                            </Pressable>
-                                            {index < TABS.length - 1 && (
-                                                <View style={styles.tabSeparator} />
-                                            )}
-                                        </View>
-                                    );
-                                })}
-                            </View>
-
-                            <Pressable
-                                onPress={() =>
-                                    setSortOrder((prev) => (prev === 'desc' ? 'asc' : 'desc'))
-                                }
-                                style={styles.sortButton}
-                                hitSlop={8}
-                            >
-                                <Text style={styles.sortText}>
-                                    {sortOrder === 'asc' ? 'Mais recente' : 'Mais antigo'}
-                                </Text>
-                                <Feather
-                                    name={sortOrder === 'asc' ? 'arrow-down' : 'arrow-up'}
-                                    size={14}
-                                    color="#0877FF"
-                                />
-                            </Pressable>
-                        </View>
-
-                        {isLoading && (
-                            <ActivityIndicator
-                                style={styles.feedback}
-                                size="large"
-                                color="#0877FF"
-                            />
-                        )}
-                        {error ? <Text style={styles.error}>{error}</Text> : null}
-                        {!isLoading && !error && sections.length === 0 && (
-                            <Text style={styles.emptyState}>
-                                {favorites.length === 0
-                                    ? 'Você ainda não favoritou nenhum edital.'
-                                    : 'Nenhum edital neste filtro para o mês selecionado.'}
-                            </Text>
-                        )}
-                    </>
-                }
-                renderSectionHeader={({ section }) => (
-                    <Text style={styles.sectionHeader}>{section.title}</Text>
-                )}
-                renderItem={({ item }) => (
-                    <FavoriteCard
-                        title={item.title}
-                        company={item.company}
-                        location={item.location}
-                        value={formatCurrency(item.estimatedValue)}
-                        status={activeTab === 'Em andamento' ? 'em_andamento' : 'encerrado'}
-                    />
-                )}
+                ListHeaderComponent={listHeader}
+                renderSectionHeader={renderSectionHeader}
+                renderItem={renderItem}
             />
         </View>
     );

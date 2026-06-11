@@ -1,3 +1,4 @@
+import { memo } from 'react';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
 
@@ -12,7 +13,7 @@ interface FavoriteCardProps {
     onPress?: () => void;
 }
 
-export function FavoriteCard({
+function FavoriteCardImpl({
     title,
     company,
     location,
@@ -70,6 +71,8 @@ export function FavoriteCard({
         </Pressable>
     );
 }
+
+export const FavoriteCard = memo(FavoriteCardImpl);
 
 const activePalette = {
     bg: '#0877FF',
