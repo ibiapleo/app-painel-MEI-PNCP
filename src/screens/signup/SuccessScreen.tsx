@@ -10,7 +10,7 @@ export default function SuccessScreen() {
     const Illustration = SuccessSVG;
 
     const handleNext = () => {
-        router.replace('/(auth)/login' as Href);
+        router.replace('/(tabs)' as Href);
     };
 
     return (
@@ -26,7 +26,7 @@ export default function SuccessScreen() {
                 </View>
 
                 <View style={styles.buttonWrapper}>
-                    <Button title="Entrar" onPress={handleNext} />
+                    <Button title="Começar" onPress={handleNext} />
                 </View>
             </View>
         </View>

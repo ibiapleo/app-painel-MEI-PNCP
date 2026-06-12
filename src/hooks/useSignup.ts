@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 
 import { authService, locationService, type LocationState } from '@/services/authService';
+import { useAuthStore } from '@/stores/auth/useAuthStore';
 import { useSignupStore } from '@/stores/auth/useSignUpStore';
 
 export type SignupStep = 'step1' | 'step2' | 'step3';
@@ -40,6 +41,7 @@ export function formatCnpj(value: string) {
 
 export function useSignup(step: SignupStep) {
     const router = useRouter();
+    const fetchUserProfile = useAuthStore((state) => state.fetchUserProfile);
 
     const {
         draft,
@@ -181,12 +183,13 @@ export function useSignup(step: SignupStep) {
                 email: draft.email,
                 password: draft.password,
                 cnpj: rawCnpj,
-                interested_state_ids: draft.selectedStates,
+                interested_state_siglas: draft.selectedStates,
                 cnae_ids: draft.cnaes.map(cnae => cnae.id),
             });
 
+            await fetchUserProfile();
             completeRegistration();
-            router.push('/(signup)/success' as any);
+            router.replace('/(tabs)' as Href);
             return true;
         } catch (error: any) {
             console.log("=== ERRO CAPTURADO NO TRY/CATCH ===");
