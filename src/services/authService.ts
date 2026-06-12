@@ -7,7 +7,7 @@ export type RegisterMeiPayload = {
   email: string;
   password: string;
   cnpj: string;
-  interested_state_ids: string[];
+  interested_state_siglas: string[];
   cnae_ids: string[];
 };
 
@@ -81,7 +81,9 @@ export const authService = {
   },
 
   async getCnaesByCnpj(cnpj: string) {
-    const response = await api.get(`/cnpj/${cnpj}/cnaes`);
+    const response = await api.get('/cnpj/cnaes', {
+      params: { cnpj: cnpj.replace(/\D/g, '') },
+    });
     return response.data;
   },
 };

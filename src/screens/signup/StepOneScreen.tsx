@@ -14,14 +14,14 @@ export default function StepOneScreen() {
     const { filteredStates, loadingStates, searchText, setSearchText, selectedStates, toggleState, handleNext } = signup.step1;
 
     const renderState = ({ item }: { item: LocationState }) => {
-        const isSelected = selectedStates.includes(item.id);
+        const isSelected = selectedStates.includes(item.sigla);
         return (
             <TouchableOpacity
                 style={[
                     styles.stateItem,
                     isSelected && styles.stateItemSelected,
                 ]}
-                onPress={() => toggleState(item.id)}
+                onPress={() => toggleState(item.sigla)}
             >
                 <View style={styles.stateRow}>
                     <Text style={styles.stateText}>

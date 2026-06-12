@@ -13,7 +13,7 @@ export interface SignupDraft {
   cnpj: string;
   email: string;
   password: string;
-  selectedStates: string[];
+  selectedStates: string[]; // UF siglas, ex: "PE", "SP"
   cnaes: Cnae[];
 }
 
@@ -34,7 +34,7 @@ interface SignupStoreActions {
   setDraftField: <K extends keyof SignupDraft>(field: K, value: SignupDraft[K]) => void;
   setError: (field: keyof SignupErrors, error: string) => void;
   clearError: (field: keyof SignupErrors) => void;
-  toggleSelectedState: (stateId: string) => void;
+  toggleSelectedState: (stateSigla: string) => void;
   completeRegistration: () => void;
   setHasHydrated: (value: boolean) => void;
 }
@@ -89,15 +89,15 @@ export const useSignupStore = create<SignupStore>()(
           errors: { ...state.errors, [field]: '' },
         })),
 
-      toggleSelectedState: (stateId) =>
+      toggleSelectedState: (stateSigla) =>
         set((state) => {
-          const isSelected = state.draft.selectedStates.includes(stateId);
+          const isSelected = state.draft.selectedStates.includes(stateSigla);
           return {
             draft: {
               ...state.draft,
               selectedStates: isSelected
-                ? state.draft.selectedStates.filter((id) => id !== stateId)
-                : [...state.draft.selectedStates, stateId],
+                ? state.draft.selectedStates.filter((sigla) => sigla !== stateSigla)
+                : [...state.draft.selectedStates, stateSigla],
             },
           };
         }),
