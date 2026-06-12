@@ -14,56 +14,16 @@ import { useRouter } from 'expo-router';
 import NotificationCard, { Notification } from "@/components/NotificationCard/NotificationCard";
 import { useTheme } from '@/hooks/useTheme';
 import { useThemeStore } from '@/stores/theme/useThemeStore';
-
-const mockNotifications: Notification[] = [
-  {
-    id: '1',
-    title: 'Novos editais compatíveis disponíveis!',
-    description: 'Veja agora diversos editais compatíveis com seu perfil, aproveite!',
-    date: 'Hoje, 14:30',
-    isRead: false,
-    type: 'edital'
-  },
-  {
-    id: '2',
-    title: 'Um edital que você acompanha finalizou',
-    description: 'Confira o seu calendário para visualizar os prazos de editais que você acompanha.',
-    date: 'Ontem, 09:15',
-    isRead: false,
-    type: 'finalizado'
-  },
-  {
-    id: '3',
-    title: 'Novos editais compatíveis disponíveis!',
-    description: 'Veja agora diversos editais compatíveis com seu perfil, aproveite!',
-    date: '02/04/2026',
-    isRead: true,
-    type: 'edital'
-  },
-  {
-    id: '4',
-    title: 'Um edital que você acompanha finalizou',
-    description: 'Confira o seu calendário para visualizar os prazos de editais que você acompanha.',
-    date: '02/05/2026',
-    isRead: true,
-    type: 'finalizado'
-  },
-  {
-    id: '5',
-    title: 'Atualização no sistema',
-    description: 'Novas funcionalidades disponíveis para melhorar sua experiência.',
-    date: '30/05/2026',
-    isRead: true,
-    type: 'info'
-  }
-];
+import NotificationCard from "@/components/NotificationCard/NotificationCard";
+import { useNotificationStore } from "@/stores/notifications/useNotificationsStore";
 
 export default function NotificationsScreen() {
   const router = useRouter();
   const theme = useTheme();
   const mode = useThemeStore((state) => state.mode);
   const [activeTab, setActiveTab] = useState<'unread' | 'read'>('unread');
-  const [notifications, setNotifications] = useState<Notification[]>(mockNotifications);
+
+  const { notifications, markAsRead } = useNotificationStore();
 
   const styles = useMemo(
     () =>
@@ -189,13 +149,9 @@ export default function NotificationsScreen() {
     return activeTab === 'unread' ? unreadNotifications : readNotifications;
   };
 
-  const handleNotificationPress = (notification: Notification) => {
+  const handleNotificationPress = (notification: any) => {
     if (!notification.isRead) {
-      setNotifications(prev =>
-        prev.map(n =>
-          n.id === notification.id ? { ...n, isRead: true } : n
-        )
-      );
+      markAsRead(notification.id);
     }
   };
 
@@ -278,7 +234,20 @@ export default function NotificationsScreen() {
             {currentNotifications.map((notification) => (
               <NotificationCard
                 key={notification.id}
-                notification={notification}
+                notification={{
+                  id: notification.id,
+                  title: notification.title,
+                  description: notification.message,
+                  date: new Date(notification.date).toLocaleDateString('pt-BR', {
+                    day: '2-digit',
+                    month: '2-digit',
+                    year: 'numeric',
+                    hour: '2-digit',
+                    minute: '2-digit'
+                  }),
+                  isRead: notification.isRead,
+                  type: 'info' // ou mapear baseado no tipo da notificação
+                }}
                 onPress={handleNotificationPress}
               />
             ))}

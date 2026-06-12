@@ -10,7 +10,9 @@ import { SearchHeader } from '@/components/SearchHeader/SearchHeader';
 import { useOpportunities } from '@/hooks/useOpportunities';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useTheme } from '@/hooks/useTheme';
+import { useNotificationTimer } from "@/hooks/useNotificationTimer";
 import { getOpportunityDetail } from '@/services/opportunitiesService';
+import { useAuthStore } from "@/stores/auth/useAuthStore";
 import {
     useFiltersStore,
     VALUE_RANGE_MAX,
@@ -52,6 +54,7 @@ export default function HomeScreen() {
     } = useOpportunities();
 
     const { notificationCount } = useNotifications();
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
 
     const categories = useFiltersStore((s) => s.categories);
     const regions = useFiltersStore((s) => s.regions);
@@ -101,6 +104,7 @@ export default function HomeScreen() {
             }),
         [theme],
     );
+    useNotificationTimer(isAuthenticated);
 
     const filteredOpportunities = useMemo(() => {
         const hasCategory = categories.length > 0;
