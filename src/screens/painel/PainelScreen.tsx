@@ -14,6 +14,8 @@ import { FavoriteCard } from '@/components/FavoriteCard/FavoriteCard';
 import { FavoritesCalendar, type MarkType } from '@/components/FavoritesCalendar/FavoritesCalendar';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppTheme } from '@/hooks/useTheme';
 import type { Opportunity } from '@/types/opportunity';
 import type { FavoritesTab } from '@/stores/favorites/types';
 
@@ -56,16 +58,147 @@ function formatSectionTitle(dayKey: string): string {
     return `${MONTH_LABELS_SHORT[m - 1]} ${d}`;
 }
 
+function createStyles(theme: AppTheme) {
+    return StyleSheet.create({
+        container: {
+            flex: 1,
+            backgroundColor: theme.colors.background.screen,
+        },
+        header: {
+            paddingHorizontal: 24,
+            paddingTop: 44,
+            paddingBottom: 12,
+            backgroundColor: theme.colors.background.surface,
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+        },
+        headerTitle: {
+            fontSize: 18,
+            fontWeight: '800',
+            color: theme.colors.text.primary,
+        },
+        notificationWrapper: {
+            position: 'relative',
+        },
+        badge: {
+            position: 'absolute',
+            top: -6,
+            right: -6,
+            minWidth: 18,
+            height: 18,
+            borderRadius: 9,
+            backgroundColor: theme.colors.primary.main,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 4,
+        },
+        badgeText: {
+            color: theme.colors.text.onPrimary,
+            fontSize: 10,
+            fontWeight: '700',
+        },
+        listContent: {
+            paddingBottom: 24,
+        },
+        tabsWrapper: {
+            backgroundColor: theme.colors.background.surface,
+            paddingHorizontal: 24,
+            paddingBottom: 12,
+            paddingTop: 4,
+        },
+        tabsContainer: {
+            height: 40,
+            backgroundColor: theme.colors.background.screen,
+            borderRadius: 20,
+            flexDirection: 'row',
+            alignItems: 'center',
+            paddingHorizontal: 4,
+        },
+        tabWrapper: {
+            flex: 1,
+            flexDirection: 'row',
+            alignItems: 'center',
+        },
+        tab: {
+            flex: 1,
+            height: 32,
+            borderRadius: 16,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        activeTab: {
+            backgroundColor: theme.colors.background.surface,
+        },
+        tabText: {
+            color: theme.colors.text.secondary,
+            fontSize: 12,
+            fontWeight: '700',
+        },
+        activeTabText: {
+            color: theme.colors.text.primary,
+        },
+        tabSeparator: {
+            width: 1,
+            height: 14,
+            backgroundColor: theme.colors.border.default,
+        },
+        sortButton: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            alignSelf: 'flex-end',
+            paddingVertical: 8,
+            paddingHorizontal: 4,
+            marginTop: 8,
+        },
+        sortText: {
+            color: theme.colors.primary.main,
+            fontSize: 12,
+            fontWeight: '600',
+        },
+        sectionHeader: {
+            fontSize: 14,
+            fontWeight: '700',
+            color: theme.colors.text.primary,
+            paddingHorizontal: 24,
+            paddingTop: 16,
+            paddingBottom: 8,
+        },
+        feedback: {
+            marginTop: 24,
+        },
+        error: {
+            marginTop: 24,
+            textAlign: 'center',
+            color: theme.error[500],
+            fontWeight: '600',
+            paddingHorizontal: 24,
+        },
+        emptyState: {
+            marginTop: 32,
+            textAlign: 'center',
+            color: theme.colors.text.secondary,
+            fontSize: 14,
+            paddingHorizontal: 24,
+        },
+    });
+}
+
 const PainelHeader = memo(function PainelHeader({
     notificationCount,
+    styles,
+    iconColor,
 }: {
     notificationCount: number;
+    styles: ReturnType<typeof createStyles>;
+    iconColor: string;
 }) {
     return (
         <View style={styles.header}>
             <Text style={styles.headerTitle}>Painel</Text>
             <View style={styles.notificationWrapper}>
-                <Ionicons name="notifications-outline" size={27} color="#202124" />
+                <Ionicons name="notifications-outline" size={27} color={iconColor} />
                 {notificationCount > 0 && (
                     <View style={styles.badge}>
                         <Text style={styles.badgeText}>
@@ -83,11 +216,15 @@ const TabsAndSort = memo(function TabsAndSort({
     onChangeTab,
     sortOrder,
     onToggleSort,
+    styles,
+    primaryColor,
 }: {
     activeTab: FavoritesTab;
     onChangeTab: (tab: FavoritesTab) => void;
     sortOrder: SortOrder;
     onToggleSort: () => void;
+    styles: ReturnType<typeof createStyles>;
+    primaryColor: string;
 }) {
     return (
         <View style={styles.tabsWrapper}>
@@ -124,18 +261,26 @@ const TabsAndSort = memo(function TabsAndSort({
                 <Feather
                     name={sortOrder === 'soonest' ? 'arrow-up' : 'arrow-down'}
                     size={14}
-                    color="#0877FF"
+                    color={primaryColor}
                 />
             </Pressable>
         </View>
     );
 });
 
-const SectionHeader = memo(function SectionHeader({ title }: { title: string }) {
+const SectionHeader = memo(function SectionHeader({
+    title,
+    styles,
+}: {
+    title: string;
+    styles: ReturnType<typeof createStyles>;
+}) {
     return <Text style={styles.sectionHeader}>{title}</Text>;
 });
 
 export default function PainelScreen() {
+    const theme = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
     const { favorites, isLoading, error, activeTab, setActiveTab, reload } = useFavorites();
     const { notificationCount } = useNotifications();
 
@@ -204,8 +349,6 @@ export default function PainelScreen() {
         return Array.from(groups.entries())
             .sort((a, b) => {
                 if (a[0] === b[0]) return 0;
-                // 'soonest' = ascending by date (closest first)
-                // 'latest'  = descending by date (furthest first)
                 if (sortOrder === 'soonest') return a[0] < b[0] ? -1 : 1;
                 return a[0] < b[0] ? 1 : -1;
             })
@@ -243,9 +386,11 @@ export default function PainelScreen() {
                     onChangeTab={handleChangeTab}
                     sortOrder={sortOrder}
                     onToggleSort={handleToggleSort}
+                    styles={styles}
+                    primaryColor={theme.colors.primary.main}
                 />
                 {isLoading && (
-                    <ActivityIndicator style={styles.feedback} size="large" color="#0877FF" />
+                    <ActivityIndicator style={styles.feedback} size="large" color={theme.colors.primary.main} />
                 )}
                 {error ? <Text style={styles.error}>{error}</Text> : null}
                 {!isLoading && !error && sections.length === 0 && (
@@ -270,6 +415,8 @@ export default function PainelScreen() {
             error,
             sections.length,
             favorites.length,
+            styles,
+            theme.colors.primary.main,
         ]
     );
 
@@ -288,16 +435,20 @@ export default function PainelScreen() {
 
     const renderSectionHeader = useCallback(
         ({ section }: { section: { title: string } }) => (
-            <SectionHeader title={section.title} />
+            <SectionHeader title={section.title} styles={styles} />
         ),
-        []
+        [styles]
     );
 
     const keyExtractor = useCallback((item: Opportunity) => item.id, []);
 
     return (
         <View style={styles.container}>
-            <PainelHeader notificationCount={notificationCount} />
+            <PainelHeader
+                notificationCount={notificationCount}
+                styles={styles}
+                iconColor={theme.colors.text.primary}
+            />
 
             <SectionList
                 sections={sections}
@@ -311,128 +462,3 @@ export default function PainelScreen() {
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F6FA',
-    },
-    header: {
-        paddingHorizontal: 24,
-        paddingTop: 44,
-        paddingBottom: 12,
-        backgroundColor: '#FFFFFF',
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    headerTitle: {
-        fontSize: 18,
-        fontWeight: '800',
-        color: '#202124',
-    },
-    notificationWrapper: {
-        position: 'relative',
-    },
-    badge: {
-        position: 'absolute',
-        top: -6,
-        right: -6,
-        minWidth: 18,
-        height: 18,
-        borderRadius: 9,
-        backgroundColor: '#0877FF',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 4,
-    },
-    badgeText: {
-        color: '#FFFFFF',
-        fontSize: 10,
-        fontWeight: '700',
-    },
-    listContent: {
-        paddingBottom: 24,
-    },
-    tabsWrapper: {
-        backgroundColor: '#FFFFFF',
-        paddingHorizontal: 24,
-        paddingBottom: 12,
-        paddingTop: 4,
-    },
-    tabsContainer: {
-        height: 40,
-        backgroundColor: '#F5F6FA',
-        borderRadius: 20,
-        flexDirection: 'row',
-        alignItems: 'center',
-        paddingHorizontal: 4,
-    },
-    tabWrapper: {
-        flex: 1,
-        flexDirection: 'row',
-        alignItems: 'center',
-    },
-    tab: {
-        flex: 1,
-        height: 32,
-        borderRadius: 16,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    activeTab: {
-        backgroundColor: '#FFFFFF',
-    },
-    tabText: {
-        color: '#777A83',
-        fontSize: 12,
-        fontWeight: '700',
-    },
-    activeTabText: {
-        color: '#202124',
-    },
-    tabSeparator: {
-        width: 1,
-        height: 14,
-        backgroundColor: '#C9CDD5',
-    },
-    sortButton: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        alignSelf: 'flex-end',
-        paddingVertical: 8,
-        paddingHorizontal: 4,
-        marginTop: 8,
-    },
-    sortText: {
-        color: '#0877FF',
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    sectionHeader: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: '#202124',
-        paddingHorizontal: 24,
-        paddingTop: 16,
-        paddingBottom: 8,
-    },
-    feedback: {
-        marginTop: 24,
-    },
-    error: {
-        marginTop: 24,
-        textAlign: 'center',
-        color: '#D92D20',
-        fontWeight: '600',
-        paddingHorizontal: 24,
-    },
-    emptyState: {
-        marginTop: 32,
-        textAlign: 'center',
-        color: '#666',
-        fontSize: 14,
-        paddingHorizontal: 24,
-    },
-});
