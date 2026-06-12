@@ -11,7 +11,6 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
 
-import NotificationCard, { Notification } from "@/components/NotificationCard/NotificationCard";
 import { useTheme } from '@/hooks/useTheme';
 import { useThemeStore } from '@/stores/theme/useThemeStore';
 import NotificationCard from "@/components/NotificationCard/NotificationCard";

@@ -206,7 +206,7 @@ const PainelHeader = memo(function PainelHeader({
             <Text style={styles.headerTitle}>Painel</Text>
             <TouchableOpacity onPress={handleNotificationPress}>
                 <View style={styles.notificationWrapper}>
-                    <Ionicons name="notifications-outline" size={27} color="#202124" />
+                    <Ionicons name="notifications-outline" size={27} color={iconColor} />
                     {notificationCount > 0 && (
                         <View style={styles.badge}>
                             <Text style={styles.badgeText}>

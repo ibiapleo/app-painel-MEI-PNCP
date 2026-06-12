@@ -59,35 +59,43 @@ export function useSignup(step: SignupStep) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 	const [loadingCnaes, setLoadingCnaes] = useState(false);
 
-	useEffect(() => {
+    useEffect(() => {
         if (step !== 'step2') return;
 
         const rawCnpj = draft.cnpj.replace(/\D/g, '');
 
-        if (rawCnpj.length === 14 && isValidCnpj(draft.cnpj)) {
-            const fetchCnaes = async () => {
-                setLoadingCnaes(true);
-                try {
-                    const data = await authService.getCnaesByCnpj(rawCnpj);
-                    
-                    const allCnaes = [];
-                    if (data.primary_cnae) allCnaes.push(data.primary_cnae);
-                    if (data.secondary_cnaes?.length) allCnaes.push(...data.secondary_cnaes);
-                    
-                    setDraftField('cnaes', allCnaes);
-                    clearError('cnpj');
-                } catch (_error) {
-                    setDraftField('cnaes', []);
-                    setError('cnpj', 'CNPJ não encontrado ou erro na busca.');
-                } finally {
-                    setLoadingCnaes(false);
-                }
-            };
-            fetchCnaes();
-        } else if (rawCnpj.length < 14 && draft.cnaes.length > 0) {
+        if (rawCnpj.length !== 14 || !isValidCnpj(draft.cnpj)) return;
+
+        const fetchCnaes = async () => {
+            setLoadingCnaes(true);
+            try {
+                const data = await authService.getCnaesByCnpj(rawCnpj);
+
+                const allCnaes = [];
+                if (data.primary_cnae) allCnaes.push(data.primary_cnae);
+                if (data.secondary_cnaes?.length) allCnaes.push(...data.secondary_cnaes);
+
+                setDraftField('cnaes', allCnaes);
+                clearError('cnpj');
+            } catch (_error) {
+                setDraftField('cnaes', []);
+                setError('cnpj', 'CNPJ não encontrado ou erro na busca.');
+            } finally {
+                setLoadingCnaes(false);
+            }
+        };
+        fetchCnaes();
+    }, [draft.cnpj, step, setDraftField, clearError, setError]);
+
+    useEffect(() => {
+        if (step !== 'step2') return;
+
+        const rawCnpj = draft.cnpj.replace(/\D/g, '');
+
+        if (rawCnpj.length < 14 && draft.cnaes.length > 0) {
             setDraftField('cnaes', []);
         }
-    }, [draft.cnpj, step]);
+    }, [draft.cnpj, draft.cnaes.length, step, setDraftField]);
 
     useEffect(() => {
         if (step !== 'step1') return;
