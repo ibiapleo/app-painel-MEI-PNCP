@@ -1,7 +1,20 @@
 import { Ionicons } from '@expo/vector-icons';
-import { Tabs } from 'expo-router';
+import { Tabs, useRouter } from 'expo-router';
+import { useEffect } from 'react';
+
+import ProfileIcon from '@/components/icons/ProfileIcon';
+import { useAuthStore } from '@/stores/auth/useAuthStore';
 
 export default function TabsLayout() {
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const router = useRouter();
+
+    useEffect(() => {
+        if (!isAuthenticated) {
+            router.replace('/(auth)/login');
+        }
+    }, [isAuthenticated, router]);
+
     return (
         <Tabs
             screenOptions={{
@@ -35,6 +48,7 @@ export default function TabsLayout() {
                     ),
                 }}
             />
+
             <Tabs.Screen
                 name="painel"
                 options={{
@@ -45,6 +59,16 @@ export default function TabsLayout() {
                             size={22}
                             color={color}
                         />
+                    ),
+                }}
+            />
+
+            <Tabs.Screen
+                name="settings"
+                options={{
+                    title: 'Perfil',
+                    tabBarIcon: ({ color }) => (
+                        <ProfileIcon color={color} size={22} />
                     ),
                 }}
             />
