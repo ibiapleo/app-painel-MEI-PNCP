@@ -5,10 +5,11 @@ import {
     SectionList,
     StyleSheet,
     Text,
+    TouchableOpacity,
     View,
 } from 'react-native';
 import { Feather, Ionicons } from '@expo/vector-icons';
-import { useFocusEffect } from 'expo-router';
+import { useFocusEffect, useRouter } from 'expo-router';
 
 import { FavoriteCard } from '@/components/FavoriteCard/FavoriteCard';
 import { FavoritesCalendar, type MarkType } from '@/components/FavoritesCalendar/FavoritesCalendar';
@@ -61,19 +62,27 @@ const PainelHeader = memo(function PainelHeader({
 }: {
     notificationCount: number;
 }) {
+    const router = useRouter();
+
+    const handleNotificationPress = () => {
+        router.push('/notifications');
+    };
+
     return (
         <View style={styles.header}>
             <Text style={styles.headerTitle}>Painel</Text>
-            <View style={styles.notificationWrapper}>
-                <Ionicons name="notifications-outline" size={27} color="#202124" />
-                {notificationCount > 0 && (
-                    <View style={styles.badge}>
-                        <Text style={styles.badgeText}>
-                            {notificationCount > 9 ? '9+' : notificationCount}
-                        </Text>
-                    </View>
-                )}
-            </View>
+            <TouchableOpacity onPress={handleNotificationPress}>
+                <View style={styles.notificationWrapper}>
+                    <Ionicons name="notifications-outline" size={27} color="#202124" />
+                    {notificationCount > 0 && (
+                        <View style={styles.badge}>
+                            <Text style={styles.badgeText}>
+                                {notificationCount > 9 ? '9+' : notificationCount}
+                            </Text>
+                        </View>
+                    )}
+                </View>
+            </TouchableOpacity>
         </View>
     );
 });
