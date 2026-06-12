@@ -7,7 +7,7 @@ import {
     ScrollView,
     Pressable,
 } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
+import { SafeAreaProvider, SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from '@expo/vector-icons';
 
 import Button from '@/components/Button/Button';
@@ -208,7 +208,8 @@ export function EditalDetailsModal({
             onRequestClose={onClose}
             presentationStyle="fullScreen"
         >
-            <SafeAreaView style={styles.safeArea}>
+            <SafeAreaProvider>
+            <SafeAreaView style={styles.safeArea} edges={['top', 'bottom']}>
                 <View style={styles.header}>
                     <Pressable onPress={onClose} hitSlop={12} style={styles.headerBack}>
                         <Ionicons
@@ -281,7 +282,10 @@ export function EditalDetailsModal({
 
                     {opportunity.compatibility && (
                         <View style={{ marginBottom: theme.spacing.lg }}>
-                            <CardCompatibility title={opportunity.compatibility.label} />
+                            <CardCompatibility
+                                title={opportunity.compatibility.label}
+                                score={opportunity.compatibility.score}
+                            />
                         </View>
                     )}
 
@@ -343,6 +347,7 @@ export function EditalDetailsModal({
                     />
                 </View>
             </SafeAreaView>
+            </SafeAreaProvider>
         </Modal>
     );
 }

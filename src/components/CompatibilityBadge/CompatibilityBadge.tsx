@@ -3,19 +3,28 @@ import { View, Text, StyleSheet } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 
 import { useTheme } from '@/hooks/useTheme';
+import { useThemeStore } from '@/stores/theme/useThemeStore';
+import {
+    COMPATIBILITY_ICON_GLYPH_SIZE,
+    COMPATIBILITY_ICON_SIZE,
+    getCompatibilityPalette,
+} from '@/utils/compatibility';
 
 interface CompatibilityBadgeProps {
     title: string;
+    score?: number;
 }
 
-export function CompatibilityBadge({ title }: CompatibilityBadgeProps) {
+export function CompatibilityBadge({ title, score }: CompatibilityBadgeProps) {
     const theme = useTheme();
+    const mode = useThemeStore((state) => state.mode);
+    const palette = getCompatibilityPalette(theme, title, mode, score);
 
     const styles = useMemo(
         () =>
             StyleSheet.create({
                 container: {
-                    backgroundColor: theme.colors.primary.muted,
+                    backgroundColor: palette.background,
                     borderRadius: 12,
                     paddingHorizontal: 10,
                     paddingVertical: 8,
@@ -25,29 +34,33 @@ export function CompatibilityBadge({ title }: CompatibilityBadgeProps) {
                     flex: 1,
                 },
                 iconCircle: {
-                    width: 22,
-                    height: 22,
-                    borderRadius: 11,
-                    backgroundColor: theme.colors.primary.main,
+                    width: COMPATIBILITY_ICON_SIZE,
+                    height: COMPATIBILITY_ICON_SIZE,
+                    borderRadius: COMPATIBILITY_ICON_SIZE / 2,
+                    backgroundColor: palette.icon,
                     alignItems: 'center',
                     justifyContent: 'center',
                 },
                 text: {
-                    color: theme.colors.text.primary,
+                    color: palette.text,
                     fontSize: 13,
                     fontWeight: '500',
                 },
             }),
-        [theme],
+        [palette],
     );
 
     return (
         <View style={styles.container}>
             <View style={styles.iconCircle}>
-                <Ionicons name="checkmark" size={16} color={theme.colors.text.onPrimary} />
+                <Ionicons
+                    name={palette.iconName}
+                    size={COMPATIBILITY_ICON_GLYPH_SIZE}
+                    color={palette.iconForeground}
+                />
             </View>
 
-            <Text style={styles.text}>{title}</Text>
+            <Text style={styles.text}>{palette.displayLabel}</Text>
         </View>
     );
 }
