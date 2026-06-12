@@ -5,15 +5,17 @@ import {
     Text,
     StyleSheet,
     Pressable,
-    SafeAreaView,
     ScrollView,
     TextInput,
     PanResponder,
     LayoutChangeEvent,
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 
 import Button from '@/components/Button/Button';
+import { useTheme } from '@/hooks/useTheme';
+import type { AppTheme } from '@/hooks/useTheme';
 import {
     useFiltersStore,
     VALUE_RANGE_MAX,
@@ -56,13 +58,200 @@ function formatBRL(value: number): string {
     return value.toLocaleString('pt-BR', { style: 'currency', currency: 'BRL', maximumFractionDigits: 0 });
 }
 
+function createStyles(theme: AppTheme) {
+    return StyleSheet.create({
+        safeArea: {
+            flex: 1,
+            backgroundColor: theme.colors.background.surface,
+        },
+        header: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            paddingHorizontal: 20,
+            paddingVertical: 14,
+        },
+        headerAction: {
+            color: theme.colors.primary.main,
+            fontSize: 15,
+            fontWeight: '500',
+        },
+        headerTitle: {
+            fontSize: 16,
+            fontWeight: '700',
+            color: theme.colors.text.primary,
+        },
+        content: {
+            flex: 1,
+        },
+        contentContainer: {
+            paddingHorizontal: 20,
+            paddingBottom: 24,
+        },
+        section: {
+            borderBottomWidth: 1,
+            borderBottomColor: theme.colors.border.subtle,
+            paddingVertical: 14,
+        },
+        sectionHeader: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+        },
+        sectionTitle: {
+            fontSize: 15,
+            color: theme.colors.text.primary,
+            fontWeight: '500',
+        },
+        sectionBody: {
+            marginTop: 12,
+        },
+        countBadge: {
+            minWidth: 22,
+            height: 22,
+            borderRadius: 11,
+            backgroundColor: theme.colors.primary.main,
+            alignItems: 'center',
+            justifyContent: 'center',
+            paddingHorizontal: 6,
+        },
+        countBadgeText: {
+            color: theme.colors.text.onPrimary,
+            fontSize: 11,
+            fontWeight: '700',
+        },
+        chipsRow: {
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+            gap: 8,
+        },
+        chip: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 6,
+            paddingHorizontal: 12,
+            paddingVertical: 6,
+            borderRadius: 999,
+            backgroundColor: theme.colors.background.screen,
+        },
+        chipActive: {
+            backgroundColor: theme.colors.primary.muted,
+        },
+        chipText: {
+            fontSize: 11,
+            fontWeight: '700',
+            color: theme.colors.text.secondary,
+            letterSpacing: 0.4,
+        },
+        chipTextActive: {
+            color: theme.colors.primary.main,
+        },
+        searchBox: {
+            marginTop: 14,
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 8,
+            borderWidth: 1,
+            borderColor: theme.colors.border.default,
+            borderRadius: 10,
+            paddingHorizontal: 12,
+            paddingVertical: 10,
+        },
+        searchInput: {
+            flex: 1,
+            fontSize: 14,
+            color: theme.colors.text.primary,
+            padding: 0,
+        },
+        suggestionRow: {
+            paddingVertical: 10,
+            paddingHorizontal: 8,
+        },
+        suggestionText: {
+            fontSize: 14,
+            color: theme.colors.text.primary,
+        },
+        sliderBlock: {
+            marginTop: 14,
+        },
+        sliderHeader: {
+            flexDirection: 'row',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 12,
+        },
+        sliderLabel: {
+            fontSize: 14,
+            fontWeight: '700',
+            color: theme.colors.text.primary,
+        },
+        stepperRow: {
+            flexDirection: 'row',
+            alignItems: 'center',
+            gap: 10,
+        },
+        stepperButton: {
+            width: 26,
+            height: 26,
+            borderRadius: 13,
+            backgroundColor: theme.colors.background.screen,
+            alignItems: 'center',
+            justifyContent: 'center',
+        },
+        stepperValue: {
+            minWidth: 70,
+            textAlign: 'center',
+            fontSize: 14,
+            fontWeight: '600',
+            color: theme.colors.text.primary,
+        },
+        trackHitArea: {
+            paddingVertical: 10,
+        },
+        track: {
+            height: 4,
+            backgroundColor: theme.colors.border.subtle,
+            borderRadius: 2,
+            justifyContent: 'center',
+        },
+        trackFill: {
+            position: 'absolute',
+            left: 0,
+            height: 4,
+            backgroundColor: theme.colors.primary.main,
+            borderRadius: 2,
+        },
+        thumb: {
+            position: 'absolute',
+            width: 18,
+            height: 18,
+            borderRadius: 9,
+            backgroundColor: theme.colors.primary.main,
+            borderWidth: 2,
+            borderColor: theme.colors.background.surface,
+            top: -7,
+        },
+        footer: {
+            paddingHorizontal: 20,
+            paddingVertical: 14,
+            borderTopWidth: 1,
+            borderTopColor: theme.colors.border.subtle,
+        },
+        applyButton: {
+            borderRadius: 999,
+        },
+    });
+}
+
 interface ValueSliderProps {
     label: string;
     value: number;
     onChange: (value: number) => void;
+    styles: ReturnType<typeof createStyles>;
+    theme: AppTheme;
 }
 
-function ValueSlider({ label, value, onChange }: ValueSliderProps) {
+function ValueSlider({ label, value, onChange, styles, theme }: ValueSliderProps) {
     const [trackWidth, setTrackWidth] = useState(0);
     const startValueRef = useRef(value);
     const trackWidthRef = useRef(trackWidth);
@@ -104,7 +293,6 @@ function ValueSlider({ label, value, onChange }: ValueSliderProps) {
                     onChange(snap(startValueRef.current + delta));
                 },
             }),
-        // panResponder doesn't need to rebuild on value change — refs handle it
         // eslint-disable-next-line react-hooks/exhaustive-deps
         [onChange, range]
     );
@@ -121,7 +309,7 @@ function ValueSlider({ label, value, onChange }: ValueSliderProps) {
                         style={styles.stepperButton}
                         hitSlop={6}
                     >
-                        <Feather name="minus" size={14} color="#202124" />
+                        <Feather name="minus" size={14} color={theme.colors.text.primary} />
                     </Pressable>
                     <Text style={styles.stepperValue}>{formatBRL(value)}</Text>
                     <Pressable
@@ -129,7 +317,7 @@ function ValueSlider({ label, value, onChange }: ValueSliderProps) {
                         style={styles.stepperButton}
                         hitSlop={6}
                     >
-                        <Feather name="plus" size={14} color="#0877FF" />
+                        <Feather name="plus" size={14} color={theme.colors.primary.main} />
                     </Pressable>
                 </View>
             </View>
@@ -149,11 +337,15 @@ function CategorySection({
     onToggle,
     selected,
     onSelect,
+    styles,
+    theme,
 }: {
     expanded: boolean;
     onToggle: () => void;
     selected: string[];
     onSelect: (v: string) => void;
+    styles: ReturnType<typeof createStyles>;
+    theme: AppTheme;
 }) {
     return (
         <SectionShell
@@ -161,6 +353,8 @@ function CategorySection({
             expanded={expanded}
             onToggle={onToggle}
             count={selected.length}
+            styles={styles}
+            theme={theme}
         >
             <View style={styles.chipsRow}>
                 {CATEGORIES.map((c) => {
@@ -174,7 +368,7 @@ function CategorySection({
                             <Text style={[styles.chipText, isOn && styles.chipTextActive]}>
                                 {c.toUpperCase()}
                             </Text>
-                            {isOn && <Feather name="x" size={12} color="#0877FF" />}
+                            {isOn && <Feather name="x" size={12} color={theme.colors.primary.main} />}
                         </Pressable>
                     );
                 })}
@@ -188,11 +382,15 @@ function RegionSection({
     onToggle,
     selected,
     onSelect,
+    styles,
+    theme,
 }: {
     expanded: boolean;
     onToggle: () => void;
     selected: string[];
     onSelect: (v: string) => void;
+    styles: ReturnType<typeof createStyles>;
+    theme: AppTheme;
 }) {
     const [query, setQuery] = useState('');
     const suggestions = useMemo(() => {
@@ -209,6 +407,8 @@ function RegionSection({
             expanded={expanded}
             onToggle={onToggle}
             count={selected.length}
+            styles={styles}
+            theme={theme}
         >
             <View style={styles.chipsRow}>
                 {selected.map((r) => (
@@ -220,18 +420,18 @@ function RegionSection({
                         <Text style={[styles.chipText, styles.chipTextActive]}>
                             {r.toUpperCase()}
                         </Text>
-                        <Feather name="x" size={12} color="#0877FF" />
+                        <Feather name="x" size={12} color={theme.colors.primary.main} />
                     </Pressable>
                 ))}
             </View>
 
             <View style={styles.searchBox}>
-                <Feather name="search" size={16} color="#777A83" />
+                <Feather name="search" size={16} color={theme.colors.text.secondary} />
                 <TextInput
                     value={query}
                     onChangeText={setQuery}
                     placeholder="Buscar estado..."
-                    placeholderTextColor="#A0A0A5"
+                    placeholderTextColor={theme.colors.text.secondary}
                     style={styles.searchInput}
                 />
             </View>
@@ -258,12 +458,16 @@ function SectionShell({
     onToggle,
     count,
     children,
+    styles,
+    theme,
 }: {
     title: string;
     expanded: boolean;
     onToggle: () => void;
     count: number;
     children: React.ReactNode;
+    styles: ReturnType<typeof createStyles>;
+    theme: AppTheme;
 }) {
     return (
         <View style={styles.section}>
@@ -277,7 +481,7 @@ function SectionShell({
                     <Feather
                         name={expanded ? 'chevron-up' : 'chevron-down'}
                         size={20}
-                        color="#777A83"
+                        color={theme.colors.text.secondary}
                     />
                 )}
             </Pressable>
@@ -287,6 +491,9 @@ function SectionShell({
 }
 
 function FilterModalImpl({ visible, onClose }: FilterModalProps) {
+    const theme = useTheme();
+    const styles = useMemo(() => createStyles(theme), [theme]);
+
     const categories = useFiltersStore((s) => s.categories);
     const regions = useFiltersStore((s) => s.regions);
     const valueMin = useFiltersStore((s) => s.valueMin);
@@ -330,6 +537,8 @@ function FilterModalImpl({ visible, onClose }: FilterModalProps) {
                         onToggle={() => toggle('categoria')}
                         selected={categories}
                         onSelect={toggleCategory}
+                        styles={styles}
+                        theme={theme}
                     />
 
                     <RegionSection
@@ -337,6 +546,8 @@ function FilterModalImpl({ visible, onClose }: FilterModalProps) {
                         onToggle={() => toggle('regiao')}
                         selected={regions}
                         onSelect={toggleRegion}
+                        styles={styles}
+                        theme={theme}
                     />
 
                     <SectionShell
@@ -346,22 +557,34 @@ function FilterModalImpl({ visible, onClose }: FilterModalProps) {
                         count={
                             valueMin > VALUE_RANGE_MIN || valueMax < VALUE_RANGE_MAX ? 1 : 0
                         }
+                        styles={styles}
+                        theme={theme}
                     >
                         <ValueSlider
                             label="Mínimo"
                             value={valueMin}
                             onChange={setValueMin}
+                            styles={styles}
+                            theme={theme}
                         />
                         <ValueSlider
                             label="Máximo"
                             value={valueMax}
                             onChange={setValueMax}
+                            styles={styles}
+                            theme={theme}
                         />
                     </SectionShell>
                 </ScrollView>
 
                 <View style={styles.footer}>
-                    <Button title="Aplicar filtros" size="lg" onPress={onClose} style={styles.applyButton} />
+                    <Button
+                        title="Aplicar filtros"
+                        size="lg"
+                        useThemeColors
+                        onPress={onClose}
+                        style={styles.applyButton}
+                    />
                 </View>
             </SafeAreaView>
         </Modal>
@@ -370,186 +593,3 @@ function FilterModalImpl({ visible, onClose }: FilterModalProps) {
 
 export const FilterModal = memo(FilterModalImpl);
 export type { FiltersState };
-
-const styles = StyleSheet.create({
-    safeArea: {
-        flex: 1,
-        backgroundColor: '#FFFFFF',
-    },
-    header: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        paddingHorizontal: 20,
-        paddingVertical: 14,
-    },
-    headerAction: {
-        color: '#0877FF',
-        fontSize: 15,
-        fontWeight: '500',
-    },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#202124',
-    },
-    content: {
-        flex: 1,
-    },
-    contentContainer: {
-        paddingHorizontal: 20,
-        paddingBottom: 24,
-    },
-    section: {
-        borderBottomWidth: 1,
-        borderBottomColor: '#E9EBF1',
-        paddingVertical: 14,
-    },
-    sectionHeader: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-    },
-    sectionTitle: {
-        fontSize: 15,
-        color: '#202124',
-        fontWeight: '500',
-    },
-    sectionBody: {
-        marginTop: 12,
-    },
-    countBadge: {
-        minWidth: 22,
-        height: 22,
-        borderRadius: 11,
-        backgroundColor: '#0877FF',
-        alignItems: 'center',
-        justifyContent: 'center',
-        paddingHorizontal: 6,
-    },
-    countBadgeText: {
-        color: '#FFFFFF',
-        fontSize: 11,
-        fontWeight: '700',
-    },
-    chipsRow: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-        gap: 8,
-    },
-    chip: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        paddingHorizontal: 12,
-        paddingVertical: 6,
-        borderRadius: 999,
-        backgroundColor: '#F5F6FA',
-    },
-    chipActive: {
-        backgroundColor: '#EAF2FF',
-    },
-    chipText: {
-        fontSize: 11,
-        fontWeight: '700',
-        color: '#777A83',
-        letterSpacing: 0.4,
-    },
-    chipTextActive: {
-        color: '#0877FF',
-    },
-    searchBox: {
-        marginTop: 14,
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 8,
-        borderWidth: 1,
-        borderColor: '#D4D6DB',
-        borderRadius: 10,
-        paddingHorizontal: 12,
-        paddingVertical: 10,
-    },
-    searchInput: {
-        flex: 1,
-        fontSize: 14,
-        color: '#202124',
-        padding: 0,
-    },
-    suggestionRow: {
-        paddingVertical: 10,
-        paddingHorizontal: 8,
-    },
-    suggestionText: {
-        fontSize: 14,
-        color: '#202124',
-    },
-    sliderBlock: {
-        marginTop: 14,
-    },
-    sliderHeader: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 12,
-    },
-    sliderLabel: {
-        fontSize: 14,
-        fontWeight: '700',
-        color: '#202124',
-    },
-    stepperRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 10,
-    },
-    stepperButton: {
-        width: 26,
-        height: 26,
-        borderRadius: 13,
-        backgroundColor: '#F5F6FA',
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    stepperValue: {
-        minWidth: 70,
-        textAlign: 'center',
-        fontSize: 14,
-        fontWeight: '600',
-        color: '#202124',
-    },
-    trackHitArea: {
-        paddingVertical: 10,
-    },
-    track: {
-        height: 4,
-        backgroundColor: '#E9EBF1',
-        borderRadius: 2,
-        justifyContent: 'center',
-    },
-    trackFill: {
-        position: 'absolute',
-        left: 0,
-        height: 4,
-        backgroundColor: '#0877FF',
-        borderRadius: 2,
-    },
-    thumb: {
-        position: 'absolute',
-        width: 18,
-        height: 18,
-        borderRadius: 9,
-        backgroundColor: '#0877FF',
-        borderWidth: 2,
-        borderColor: '#FFFFFF',
-        top: -7,
-    },
-    footer: {
-        paddingHorizontal: 20,
-        paddingVertical: 14,
-        borderTopWidth: 1,
-        borderTopColor: '#E9EBF1',
-    },
-    applyButton: {
-        borderRadius: 999,
-    },
-});

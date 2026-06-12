@@ -1,6 +1,8 @@
+import { useMemo } from "react";
 import { StyleSheet, Text, View, TouchableOpacity } from "react-native";
 import { Ionicons } from "@expo/vector-icons";
-import { tokens } from "@/theme";
+
+import { useTheme } from "@/hooks/useTheme";
 
 export interface Notification {
   id: string;
@@ -17,6 +19,53 @@ interface NotificationCardProps {
 }
 
 export default function NotificationCard({ notification, onPress }: NotificationCardProps) {
+  const theme = useTheme();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          padding: 12,
+          backgroundColor: theme.colors.background.muted,
+          borderRadius: 12,
+          gap: 12,
+        },
+        iconContainer: {
+          width: 48,
+          height: 48,
+          borderRadius: 24,
+          backgroundColor: theme.colors.border.subtle,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        contentContainer: {
+          flex: 1,
+          gap: 4,
+        },
+        title: {
+          fontSize: theme.typography.fontSize.bodyL,
+          fontWeight: theme.typography.fontWeight.medium,
+          color: theme.colors.text.primary,
+          lineHeight: 22,
+        },
+        description: {
+          fontSize: theme.typography.fontSize.bodyM,
+          fontWeight: theme.typography.fontWeight.regular,
+          color: theme.colors.text.secondary,
+          lineHeight: 20,
+        },
+        date: {
+          fontSize: theme.typography.fontSize.bodyS,
+          fontWeight: theme.typography.fontWeight.regular,
+          color: theme.colors.text.secondary,
+          marginTop: 4,
+        },
+      }),
+    [theme],
+  );
+
   const getIconName = () => {
     switch (notification.type) {
       case 'edital':
@@ -30,9 +79,9 @@ export default function NotificationCard({ notification, onPress }: Notification
 
   const getIconColor = () => {
     if (!notification.isRead) {
-      return tokens.colors.primary["500"];
+      return theme.colors.primary.main;
     }
-    return tokens.colors.neutral["700"];
+    return theme.colors.text.secondary;
   };
 
   return (
@@ -64,49 +113,8 @@ export default function NotificationCard({ notification, onPress }: Notification
       <Ionicons
         name="chevron-forward-outline"
         size={20}
-        color={tokens.colors.neutral["400"]}
+        color={theme.colors.text.secondary}
       />
     </TouchableOpacity>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    padding: 12,
-    backgroundColor: tokens.colors.neutral["100"],
-    borderRadius: 12,
-    gap: 12,
-  },
-  iconContainer: {
-    width: 48,
-    height: 48,
-    borderRadius: 24,
-    backgroundColor: tokens.colors.neutral["200"],
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  contentContainer: {
-    flex: 1,
-    gap: 4,
-  },
-  title: {
-    fontSize: tokens.typography.fontSize.bodyL,
-    fontWeight: tokens.typography.fontWeight.medium,
-    color: tokens.colors.text.primary,
-    lineHeight: 22,
-  },
-  description: {
-    fontSize: tokens.typography.fontSize.bodyM,
-    fontWeight: tokens.typography.fontWeight.regular,
-    color: tokens.colors.text.secondary,
-    lineHeight: 20,
-  },
-  date: {
-    fontSize: tokens.typography.fontSize.bodyS,
-    fontWeight: tokens.typography.fontWeight.regular,
-    color: tokens.colors.neutral["400"],
-    marginTop: 4,
-  },
-});

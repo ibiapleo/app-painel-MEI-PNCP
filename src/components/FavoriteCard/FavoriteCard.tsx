@@ -1,6 +1,9 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { useTheme } from '@/hooks/useTheme';
+import type { AppTheme } from '@/hooks/useTheme';
 
 export type FavoriteStatus = 'em_andamento' | 'encerrado';
 
@@ -13,6 +16,24 @@ interface FavoriteCardProps {
     onPress?: () => void;
 }
 
+function getPalette(theme: AppTheme, isActive: boolean) {
+    if (isActive) {
+        return {
+            bg: theme.colors.primary.main,
+            textPrimary: theme.colors.text.onPrimary,
+            textSecondary: 'rgba(255,255,255,0.75)',
+            divider: 'rgba(255,255,255,0.25)',
+        };
+    }
+
+    return {
+        bg: theme.colors.background.muted,
+        textPrimary: theme.colors.text.primary,
+        textSecondary: theme.colors.text.secondary,
+        divider: theme.colors.border.default,
+    };
+}
+
 function FavoriteCardImpl({
     title,
     company,
@@ -21,8 +42,67 @@ function FavoriteCardImpl({
     status,
     onPress,
 }: FavoriteCardProps) {
+    const theme = useTheme();
     const isActive = status === 'em_andamento';
-    const palette = isActive ? activePalette : inactivePalette;
+    const palette = getPalette(theme, isActive);
+
+    const styles = useMemo(
+        () =>
+            StyleSheet.create({
+                card: {
+                    borderRadius: 16,
+                    padding: 16,
+                    marginHorizontal: 24,
+                    marginBottom: 12,
+                },
+                pressed: {
+                    opacity: 0.85,
+                },
+                title: {
+                    fontSize: 15,
+                    fontWeight: '700',
+                    lineHeight: 19,
+                    marginBottom: 10,
+                },
+                infoRow: {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                    marginTop: 2,
+                },
+                infoText: {
+                    fontSize: 11,
+                    fontWeight: '500',
+                },
+                divider: {
+                    height: 1,
+                    marginVertical: 12,
+                },
+                footer: {
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                },
+                valueLabel: {
+                    fontSize: 11,
+                    fontWeight: '600',
+                },
+                value: {
+                    fontSize: 18,
+                    fontWeight: '800',
+                },
+                statusRow: {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 6,
+                },
+                statusText: {
+                    fontSize: 13,
+                    fontWeight: '500',
+                },
+            }),
+        [],
+    );
 
     return (
         <Pressable
@@ -73,71 +153,3 @@ function FavoriteCardImpl({
 }
 
 export const FavoriteCard = memo(FavoriteCardImpl);
-
-const activePalette = {
-    bg: '#0877FF',
-    textPrimary: '#FFFFFF',
-    textSecondary: '#D7E5FA',
-    divider: 'rgba(255,255,255,0.25)',
-};
-
-const inactivePalette = {
-    bg: '#ECEEF2',
-    textPrimary: '#202124',
-    textSecondary: '#777A83',
-    divider: '#D4D6DB',
-};
-
-const styles = StyleSheet.create({
-    card: {
-        borderRadius: 16,
-        padding: 16,
-        marginHorizontal: 24,
-        marginBottom: 12,
-    },
-    pressed: {
-        opacity: 0.85,
-    },
-    title: {
-        fontSize: 15,
-        fontWeight: '700',
-        lineHeight: 19,
-        marginBottom: 10,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-        marginTop: 2,
-    },
-    infoText: {
-        fontSize: 11,
-        fontWeight: '500',
-    },
-    divider: {
-        height: 1,
-        marginVertical: 12,
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    valueLabel: {
-        fontSize: 11,
-        fontWeight: '600',
-    },
-    value: {
-        fontSize: 18,
-        fontWeight: '800',
-    },
-    statusRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 6,
-    },
-    statusText: {
-        fontSize: 13,
-        fontWeight: '500',
-    },
-});

@@ -1,6 +1,8 @@
+import { useMemo } from 'react';
 import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { CompatibilityBadge } from '@/components/CompatibilityBadge/CompatibilityBadge';
+import { useTheme } from '@/hooks/useTheme';
 
 interface OpportunityCardProps {
     title: string;
@@ -10,7 +12,7 @@ interface OpportunityCardProps {
     value: string;
     daysRemaining: string;
     isFavorite: boolean;
-    compatibilityLabel: string; 
+    compatibilityLabel: string;
     onToggleFavorite: () => void;
     onPress?: () => void;
 }
@@ -23,24 +25,100 @@ export function OpportunityCard({
     value,
     daysRemaining,
     isFavorite,
-    compatibilityLabel, 
+    compatibilityLabel,
     onToggleFavorite,
     onPress,
 }: OpportunityCardProps) {
+    const theme = useTheme();
+
+    const styles = useMemo(
+        () =>
+            StyleSheet.create({
+                card: {
+                    backgroundColor: theme.colors.background.surface,
+                    borderRadius: 18,
+                    padding: 16,
+                    marginBottom: 16,
+                },
+                cardPressed: {
+                    opacity: 0.85,
+                },
+                top: {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 16,
+                    marginBottom: 16,
+                },
+                title: {
+                    color: theme.colors.text.primary,
+                    fontSize: 15,
+                    fontWeight: '700',
+                    lineHeight: 19,
+                    marginBottom: 6,
+                },
+                infoRow: {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 4,
+                    marginTop: 2,
+                },
+                infoText: {
+                    color: theme.colors.text.secondary,
+                    fontSize: 11,
+                    fontWeight: '500',
+                },
+                description: {
+                    color: theme.colors.text.secondary,
+                    fontSize: 13,
+                    lineHeight: 17,
+                    marginTop: 14,
+                },
+                divider: {
+                    height: 1,
+                    backgroundColor: theme.colors.border.subtle,
+                    marginVertical: 14,
+                },
+                footer: {
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                },
+                valueLabel: {
+                    color: theme.colors.text.secondary,
+                    fontSize: 12,
+                    fontWeight: '600',
+                },
+                value: {
+                    color: theme.colors.text.primary,
+                    fontSize: 18,
+                    fontWeight: '800',
+                },
+                deadline: {
+                    flexDirection: 'row',
+                    alignItems: 'center',
+                    gap: 5,
+                },
+                days: {
+                    color: theme.colors.text.secondary,
+                    fontSize: 14,
+                },
+            }),
+        [theme],
+    );
+
     return (
         <Pressable
             onPress={onPress}
             style={({ pressed }) => [styles.card, pressed && onPress ? styles.cardPressed : null]}
         >
             <View style={styles.top}>
-                {/* 👈 Passando o valor dinâmico em vez de "Altamente Compatível" fixo */}
                 <CompatibilityBadge title={compatibilityLabel} />
 
                 <Pressable onPress={onToggleFavorite} hitSlop={10}>
                     <Ionicons
                         name={isFavorite ? 'heart' : 'heart-outline'}
                         size={30}
-                        color={isFavorite ? '#0877FF' : '#202124'}
+                        color={isFavorite ? theme.colors.primary.main : theme.colors.text.primary}
                     />
                 </Pressable>
             </View>
@@ -50,12 +128,12 @@ export function OpportunityCard({
             </Text>
 
             <View style={styles.infoRow}>
-                <Ionicons name="business-outline" size={15} color="#777A83" />
+                <Ionicons name="business-outline" size={15} color={theme.colors.text.secondary} />
                 <Text style={styles.infoText}>{company}</Text>
             </View>
 
             <View style={styles.infoRow}>
-                <Ionicons name="location-outline" size={15} color="#777A83" />
+                <Ionicons name="location-outline" size={15} color={theme.colors.text.secondary} />
                 <Text style={styles.infoText}>{location}</Text>
             </View>
 
@@ -72,81 +150,10 @@ export function OpportunityCard({
                 </View>
 
                 <View style={styles.deadline}>
-                    <Feather name="clock" size={16} color="#777A83" />
+                    <Feather name="clock" size={16} color={theme.colors.text.secondary} />
                     <Text style={styles.days}>{daysRemaining}</Text>
                 </View>
             </View>
         </Pressable>
     );
 }
-
-const styles = StyleSheet.create({
-    card: {
-        backgroundColor: '#FFFFFF',
-        borderRadius: 18,
-        padding: 16,
-        marginBottom: 16,
-    },
-    cardPressed: {
-        opacity: 0.85,
-    },
-    top: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 16,
-        marginBottom: 16,
-    },
-    title: {
-        color: '#202124',
-        fontSize: 15,
-        fontWeight: '700',
-        lineHeight: 19,
-        marginBottom: 6,
-    },
-    infoRow: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 4,
-        marginTop: 2,
-    },
-    infoText: {
-        color: '#777A83',
-        fontSize: 11,
-        fontWeight: '500',
-    },
-    description: {
-        color: '#777A83',
-        fontSize: 13,
-        lineHeight: 17,
-        marginTop: 14,
-    },
-    divider: {
-        height: 1,
-        backgroundColor: '#ECEEF2',
-        marginVertical: 14,
-    },
-    footer: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-    },
-    valueLabel: {
-        color: '#777A83',
-        fontSize: 12,
-        fontWeight: '600',
-    },
-    value: {
-        color: '#202124',
-        fontSize: 18,
-        fontWeight: '800',
-    },
-    deadline: {
-        flexDirection: 'row',
-        alignItems: 'center',
-        gap: 5,
-    },
-    days: {
-        color: '#777A83',
-        fontSize: 14,
-    },
-});
