@@ -3,9 +3,11 @@ import { Tabs, useRouter } from 'expo-router';
 import { useEffect } from 'react';
 
 import ProfileIcon from '@/components/icons/ProfileIcon';
+import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/auth/useAuthStore';
 
 export default function TabsLayout() {
+    const theme = useTheme();
     const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
     const router = useRouter();
 
@@ -19,15 +21,15 @@ export default function TabsLayout() {
         <Tabs
             screenOptions={{
                 headerShown: false,
-                tabBarActiveTintColor: '#0877FF',
-                tabBarInactiveTintColor: '#C4C7CF',
+                tabBarActiveTintColor: theme.colors.tabBar.active,
+                tabBarInactiveTintColor: theme.colors.tabBar.inactive,
                 tabBarStyle: {
                     height: 82,
                     paddingTop: 8,
                     paddingBottom: 12,
-                    backgroundColor: '#FFFFFF',
+                    backgroundColor: theme.colors.tabBar.background,
                     borderTopWidth: 1,
-                    borderTopColor: '#F0F1F4',
+                    borderTopColor: theme.colors.tabBar.border,
                 },
                 tabBarLabelStyle: {
                     fontSize: 11,
