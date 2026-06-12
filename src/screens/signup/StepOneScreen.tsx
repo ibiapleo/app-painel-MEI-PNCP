@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { globalStyles, tokens } from '@/theme';
 import StepIndicator from "@/components/StepIndicator/StepIndicator";
