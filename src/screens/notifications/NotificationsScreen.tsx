@@ -19,7 +19,7 @@ export default function NotificationsScreen() {
   const router = useRouter();
   const [activeTab, setActiveTab] = useState<'unread' | 'read'>('unread');
 
-  const { notifications, markAsRead, markAllAsRead } = useNotificationStore();
+  const { notifications, markAsRead } = useNotificationStore();
 
   const unreadNotifications = notifications.filter(n => !n.isRead);
   const readNotifications = notifications.filter(n => n.isRead);
