@@ -1,15 +1,22 @@
 import { useState } from "react";
-import { StyleSheet, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, View } from 'react-native';
+import { useRouter } from "expo-router";
 
 import SettingsMenuButton from "@/components/SettingsMenuButton/SettingsMenuButton";
 import LogOutModal from "@/components/LogOutModal/LogOutModal";
 
 import { tokens } from '@/theme';
 import { useAuthStore } from '@/stores/auth/useAuthStore';
+import { useThemeStore } from '@/stores/theme/useThemeStore';
 
 export default function SettingsScreen() {
+  const router = useRouter();
   const [modalVisible, setModalVisible] = useState(false);
+  const [appearanceExpanded, setAppearanceExpanded] = useState(false);
   const logout = useAuthStore((state) => state.logout);
+  const user = useAuthStore((state) => state.user);
+  const themeMode = useThemeStore((state) => state.mode);
+  const toggleMode = useThemeStore((state) => state.toggleMode);
 
   const handleLogOut = async () => {
     setModalVisible(false);
@@ -19,21 +26,42 @@ export default function SettingsScreen() {
   return (
     <View style={styles.container}>
       <View style={styles.header}>
-          <Text style={styles.headerText}>Configurações</Text>
+          <Text style={styles.headerText}>Perfil</Text>
       </View>
 
       <View style={styles.userContainer}>
-        <Text style={styles.userTitle}>João Marcolindo</Text>
-        <Text style={styles.userText}>Lindos ltda.</Text>
-        <Text style={styles.userText}>XX.XXX.XXX/0001-XX</Text>
-        <Text style={styles.userText}>joaomarcolindo@gmail.com</Text>
+        <Text style={styles.userTitle}>{user?.name}</Text>
+        {user?.company_name && <Text style={styles.userText}>{user.company_name}</Text>}
+        {user?.cnpj && <Text style={styles.userText}>{user.cnpj}</Text>}
+        <Text style={styles.userText}>{user?.email}</Text>
       </View>
 
       <View style={styles.menuContainer}>
-        <SettingsMenuButton title="Notificações" />
+        <SettingsMenuButton
+          title="Notificações"
+          onPress={() => router.push('/notifications')}
+        />
         <View style={styles.line} />
 
-        <SettingsMenuButton title="Aparência" />
+        <SettingsMenuButton
+          title="Aparência"
+          expanded={appearanceExpanded}
+          onPress={() => setAppearanceExpanded((prev) => !prev)}
+        />
+        {appearanceExpanded && (
+          <View style={styles.dropdown}>
+            <Text style={styles.dropdownLabel}>Modo escuro</Text>
+            <Switch
+              value={themeMode === 'dark'}
+              onValueChange={toggleMode}
+              trackColor={{
+                false: tokens.colors.neutral["300"],
+                true: tokens.colors.primary["500"],
+              }}
+              thumbColor="#FFFFFF"
+            />
+          </View>
+        )}
         <View style={styles.line} />
 
         <SettingsMenuButton title="Linguagem" />
@@ -99,5 +127,16 @@ const styles = StyleSheet.create({
     height: 1,
     width: '100%',
     backgroundColor: tokens.colors.neutral["300"]
+  },
+  dropdown: {
+    flexDirection: 'row',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    paddingHorizontal: 20,
+    paddingVertical: 12,
+  },
+  dropdownLabel: {
+    fontSize: 15,
+    color: tokens.colors.text.secondary,
   },
 });

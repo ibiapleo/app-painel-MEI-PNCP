@@ -6,14 +6,21 @@ import { tokens } from "@/theme";
 interface SettingsMenuButtonProps {
   title: string;
   onPress?: () => void;
+  expanded?: boolean;
 }
 
-export default function SettingsMenuButton({ title, onPress }: SettingsMenuButtonProps) {
+export default function SettingsMenuButton({ title, onPress, expanded }: SettingsMenuButtonProps) {
+  const iconName = expanded === undefined
+    ? "chevron-forward-outline"
+    : expanded
+      ? "chevron-down-outline"
+      : "chevron-forward-outline";
+
   return (
     <TouchableOpacity onPress={onPress} style={styles.button}>
       <Text style={styles.buttonText}>{title}</Text>
       <Ionicons
-        name="chevron-forward-outline"
+        name={iconName}
         size={16}
         color={tokens.colors.neutral["400"]}
       />
