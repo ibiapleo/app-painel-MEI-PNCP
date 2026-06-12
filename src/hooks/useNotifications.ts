@@ -1,5 +1,3 @@
-import { useEffect } from 'react';
-
 import { useNotificationStore } from '@/stores/notifications/useNotificationsStore';
 
 export function useNotifications() {

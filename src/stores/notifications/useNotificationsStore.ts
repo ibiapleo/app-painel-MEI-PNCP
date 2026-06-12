@@ -27,7 +27,7 @@ const mockNotifications: Notification[] = [
   }
 ];
 
-export const useNotificationStore = create<NotificationStore>((set, get) => ({
+export const useNotificationStore = create<NotificationStore>((set) => ({
   notifications: mockNotifications,
   unreadCount: mockNotifications.filter(n => !n.isRead).length,
 
