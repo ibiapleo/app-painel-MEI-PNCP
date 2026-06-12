@@ -1,34 +1,72 @@
 import { create } from 'zustand';
 
-import type { NotificationsStore } from './types';
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  date: string;
+  isRead: boolean;
+}
 
-const MOCK_NOTIFICATION_COUNT = 9;
-const MOCK_FETCH_DELAY_MS = 300;
+interface NotificationStore {
+  notifications: Notification[];
+  unreadCount: number;
+  addNotification: (notification: Omit<Notification, 'id' | 'date' | 'isRead'>) => void;
+  markAsRead: (id: string) => void;
+  clearNotifications: () => void;
+  loadNotifications: () => void;
+}
 
-export const useNotificationsStore = create<NotificationsStore>()((set) => ({
-  count: 0,
-  isLoading: false,
-  error: null,
+const mockNotifications: Notification[] = [
+  {
+    id: '1',
+    title: 'Bem-vindo ao Painel MEI!',
+    message: 'Explore os editais disponíveis e encontre oportunidades para seu negócio.',
+    date: new Date().toISOString(),
+    isRead: false,
+  }
+];
 
-  fetchCount: async () => {
-    try {
-      set({ isLoading: true, error: null });
+export const useNotificationStore = create<NotificationStore>((set, get) => ({
+  notifications: mockNotifications,
+  unreadCount: mockNotifications.filter(n => !n.isRead).length,
 
-      await new Promise<void>((resolve) => {
-        setTimeout(resolve, MOCK_FETCH_DELAY_MS);
-      });
+  addNotification: ({ title, message }) => {
+    const newNotification: Notification = {
+      id: Date.now().toString(),
+      title,
+      message,
+      date: new Date().toISOString(),
+      isRead: false,
+    };
 
-      // Substituir por chamada à API quando disponível.
-      set({ count: MOCK_NOTIFICATION_COUNT, isLoading: false });
-    } catch {
-      set({
-        isLoading: false,
-        error: 'Não foi possível carregar as notificações.',
-      });
-    }
+    set(state => ({
+      notifications: [newNotification, ...state.notifications],
+      unreadCount: state.unreadCount + 1,
+    }));
   },
 
-  reset: () => {
-    set({ count: 0, isLoading: false, error: null });
+  markAsRead: (id: string) => {
+    set(state => {
+      const updatedNotifications = state.notifications.map(notif =>
+        notif.id === id ? { ...notif, isRead: true } : notif
+      );
+      return {
+        notifications: updatedNotifications,
+        unreadCount: updatedNotifications.filter(n => !n.isRead).length,
+      };
+    });
+  },
+
+  clearNotifications: () => {
+    set({ notifications: [], unreadCount: 0 });
+  },
+
+  loadNotifications: () => {
+    const savedNotifications = mockNotifications;
+    set({
+      notifications: savedNotifications,
+      unreadCount: savedNotifications.filter(n => !n.isRead).length,
+    });
   },
 }));
