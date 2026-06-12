@@ -1,5 +1,6 @@
 import React from "react";
-import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator, SafeAreaView } from 'react-native';
+import { View, Text, FlatList, StyleSheet, TouchableOpacity, ActivityIndicator } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import { globalStyles, tokens } from '@/theme';
 import StepIndicator from "@/components/StepIndicator/StepIndicator";
@@ -13,14 +14,14 @@ export default function StepOneScreen() {
     const { filteredStates, loadingStates, searchText, setSearchText, selectedStates, toggleState, handleNext } = signup.step1;
 
     const renderState = ({ item }: { item: LocationState }) => {
-        const isSelected = selectedStates.includes(item.id);
+        const isSelected = selectedStates.includes(item.sigla);
         return (
             <TouchableOpacity
                 style={[
                     styles.stateItem,
                     isSelected && styles.stateItemSelected,
                 ]}
-                onPress={() => toggleState(item.id)}
+                onPress={() => toggleState(item.sigla)}
             >
                 <View style={styles.stateRow}>
                     <Text style={styles.stateText}>

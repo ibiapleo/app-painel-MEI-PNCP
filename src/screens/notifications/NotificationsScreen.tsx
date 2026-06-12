@@ -1,25 +1,145 @@
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import {
   StyleSheet,
   Text,
   View,
   TouchableOpacity,
   ScrollView,
-  SafeAreaView,
   StatusBar
 } from 'react-native';
+import { SafeAreaView } from 'react-native-safe-area-context';
 import { Ionicons } from "@expo/vector-icons";
 import { useRouter } from 'expo-router';
 
+import { useTheme } from '@/hooks/useTheme';
+import { useThemeStore } from '@/stores/theme/useThemeStore';
 import NotificationCard from "@/components/NotificationCard/NotificationCard";
 import { useNotificationStore } from "@/stores/notifications/useNotificationsStore";
-import { tokens } from '@/theme';
 
 export default function NotificationsScreen() {
   const router = useRouter();
+  const theme = useTheme();
+  const mode = useThemeStore((state) => state.mode);
   const [activeTab, setActiveTab] = useState<'unread' | 'read'>('unread');
 
   const { notifications, markAsRead } = useNotificationStore();
+
+  const styles = useMemo(
+    () =>
+      StyleSheet.create({
+        container: {
+          flex: 1,
+          backgroundColor: theme.colors.background.surface,
+        },
+        header: {
+          flexDirection: 'row',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          paddingHorizontal: 24,
+          paddingTop: 44,
+          paddingBottom: 12,
+          backgroundColor: theme.colors.background.surface,
+        },
+        backButton: {
+          width: 24,
+          height: 24,
+          alignItems: 'center',
+          justifyContent: 'center',
+        },
+        headerText: {
+          fontSize: theme.typography.fontSize.h2,
+          fontWeight: theme.typography.fontWeight.bold,
+          color: theme.colors.text.primary,
+        },
+        tabsWrapper: {
+          paddingHorizontal: 24,
+          paddingVertical: 12,
+          backgroundColor: theme.colors.background.surface,
+        },
+        tabsContainer: {
+          flexDirection: 'row',
+          backgroundColor: theme.colors.background.muted,
+          borderRadius: 40,
+          padding: 4,
+          gap: 4,
+        },
+        tab: {
+          flex: 1,
+          paddingVertical: 8,
+          paddingHorizontal: 16,
+          borderRadius: 32,
+          alignItems: 'center',
+          justifyContent: 'center',
+          backgroundColor: 'transparent',
+        },
+        activeTab: {
+          backgroundColor: theme.colors.background.surface,
+          shadowColor: '#000',
+          shadowOffset: {
+            width: 0,
+            height: 1,
+          },
+          shadowOpacity: 0.05,
+          shadowRadius: 2,
+          elevation: 2,
+        },
+        tabText: {
+          fontSize: theme.typography.fontSize.bodyM,
+          fontWeight: theme.typography.fontWeight.medium,
+          color: theme.colors.text.secondary,
+        },
+        activeTabText: {
+          color: theme.colors.primary.main,
+          fontWeight: theme.typography.fontWeight.semiBold,
+        },
+        scrollView: {
+          flex: 1,
+        },
+        scrollContent: {
+          flexGrow: 1,
+        },
+        emptyScrollContent: {
+          flex: 1,
+          justifyContent: 'center',
+        },
+        notificationsList: {
+          flexDirection: 'column',
+          gap: 12,
+          paddingHorizontal: 24,
+          paddingVertical: 12,
+        },
+        emptyContainer: {
+          alignItems: 'center',
+          justifyContent: 'center',
+          paddingHorizontal: 32,
+          paddingVertical: 48,
+        },
+        emptyIconContainer: {
+          width: 80,
+          height: 80,
+          borderRadius: 40,
+          backgroundColor: theme.colors.background.muted,
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: 16,
+        },
+        emptyTitle: {
+          fontSize: theme.typography.fontSize.h3,
+          fontWeight: theme.typography.fontWeight.semiBold,
+          color: theme.colors.text.primary,
+          marginBottom: 8,
+          textAlign: 'center',
+        },
+        emptyDescription: {
+          fontSize: theme.typography.fontSize.bodyM,
+          fontWeight: theme.typography.fontWeight.regular,
+          color: theme.colors.text.secondary,
+          textAlign: 'center',
+          lineHeight: 20,
+        },
+      }),
+    [theme],
+  );
 
   const unreadNotifications = notifications.filter(n => !n.isRead);
   const readNotifications = notifications.filter(n => n.isRead);
@@ -37,7 +157,7 @@ export default function NotificationsScreen() {
   const renderEmptyState = () => (
     <View style={styles.emptyContainer}>
       <View style={styles.emptyIconContainer}>
-        <Ionicons name="notifications-off-outline" size={48} color={tokens.colors.neutral["400"]} />
+        <Ionicons name="notifications-off-outline" size={48} color={theme.colors.text.secondary} />
       </View>
       <Text style={styles.emptyTitle}>Nada por aqui.</Text>
       <Text style={styles.emptyDescription}>
@@ -52,11 +172,14 @@ export default function NotificationsScreen() {
 
   return (
     <SafeAreaView style={styles.container}>
-      <StatusBar barStyle="dark-content" backgroundColor="#FFFFFF" />
+      <StatusBar
+        barStyle={mode === 'dark' ? 'light-content' : 'dark-content'}
+        backgroundColor={theme.colors.background.surface}
+      />
 
       <View style={styles.header}>
         <TouchableOpacity onPress={() => router.back()} style={styles.backButton}>
-          <Ionicons name="chevron-back" size={24} color={tokens.colors.primary["500"]} />
+          <Ionicons name="chevron-back" size={24} color={theme.colors.primary.main} />
         </TouchableOpacity>
         <Text style={styles.headerText}>Notificações</Text>
       </View>
@@ -133,121 +256,3 @@ export default function NotificationsScreen() {
     </SafeAreaView>
   );
 }
-
-const styles = StyleSheet.create({
-  container: {
-    flex: 1,
-    backgroundColor: '#FFFFFF',
-  },
-  header: {
-    flexDirection: 'row',
-    alignItems: 'center',
-    justifyContent: 'space-between',
-    paddingHorizontal: 24,
-    paddingTop: 44,
-    paddingBottom: 12,
-    backgroundColor: '#FFFFFF',
-  },
-  backButton: {
-    width: 24,
-    height: 24,
-    alignItems: 'center',
-    justifyContent: 'center',
-  },
-  headerText: {
-    fontSize: tokens.typography.fontSize.h2,
-    fontWeight: tokens.typography.fontWeight.bold,
-    color: tokens.colors.text.primary,
-  },
-  markAllText: {
-    fontSize: tokens.typography.fontSize.bodyM,
-    fontWeight: tokens.typography.fontWeight.semiBold,
-    color: tokens.colors.primary["500"],
-  },
-  tabsWrapper: {
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-    backgroundColor: '#FFFFFF',
-  },
-  tabsContainer: {
-    flexDirection: 'row',
-    backgroundColor: tokens.colors.neutral["200"],
-    borderRadius: 40,
-    padding: 4,
-    gap: 4,
-  },
-  tab: {
-    flex: 1,
-    paddingVertical: 8,
-    paddingHorizontal: 16,
-    borderRadius: 32,
-    alignItems: 'center',
-    justifyContent: 'center',
-    backgroundColor: 'transparent',
-  },
-  activeTab: {
-    backgroundColor: '#FFFFFF',
-    shadowColor: '#000',
-    shadowOffset: {
-      width: 0,
-      height: 1,
-    },
-    shadowOpacity: 0.05,
-    shadowRadius: 2,
-    elevation: 2,
-  },
-  tabText: {
-    fontSize: tokens.typography.fontSize.bodyM,
-    fontWeight: tokens.typography.fontWeight.medium,
-    color: tokens.colors.neutral["700"],
-  },
-  activeTabText: {
-    color: tokens.colors.primary["500"],
-    fontWeight: tokens.typography.fontWeight.semiBold,
-  },
-  scrollView: {
-    flex: 1,
-  },
-  scrollContent: {
-    flexGrow: 1,
-  },
-  emptyScrollContent: {
-    flex: 1,
-    justifyContent: 'center',
-  },
-  notificationsList: {
-    flexDirection: 'column',
-    gap: 12,
-    paddingHorizontal: 24,
-    paddingVertical: 12,
-  },
-  emptyContainer: {
-    alignItems: 'center',
-    justifyContent: 'center',
-    paddingHorizontal: 32,
-    paddingVertical: 48,
-  },
-  emptyIconContainer: {
-    width: 80,
-    height: 80,
-    borderRadius: 40,
-    backgroundColor: tokens.colors.neutral["100"],
-    alignItems: 'center',
-    justifyContent: 'center',
-    marginBottom: 16,
-  },
-  emptyTitle: {
-    fontSize: tokens.typography.fontSize.h3,
-    fontWeight: tokens.typography.fontWeight.semiBold,
-    color: tokens.colors.text.primary,
-    marginBottom: 8,
-    textAlign: 'center',
-  },
-  emptyDescription: {
-    fontSize: tokens.typography.fontSize.bodyM,
-    fontWeight: tokens.typography.fontWeight.regular,
-    color: tokens.colors.text.secondary,
-    textAlign: 'center',
-    lineHeight: 20,
-  },
-});

@@ -9,6 +9,7 @@ import { OpportunityCard } from '@/components/OpportunityCard/OpportunityCard';
 import { SearchHeader } from '@/components/SearchHeader/SearchHeader';
 import { useOpportunities } from '@/hooks/useOpportunities';
 import { useNotifications } from '@/hooks/useNotifications';
+import { useTheme } from '@/hooks/useTheme';
 import { useNotificationTimer } from "@/hooks/useNotificationTimer";
 import { getOpportunityDetail } from '@/services/opportunitiesService';
 import { useAuthStore } from "@/stores/auth/useAuthStore";
@@ -42,6 +43,7 @@ function formatDaysRemaining(days: number): string {
 let searchTimeout: ReturnType<typeof setTimeout>;
 
 export default function HomeScreen() {
+    const theme = useTheme();
     const {
         opportunities,
         isLoading,
@@ -68,6 +70,40 @@ export default function HomeScreen() {
     const [isFetchingDetail, setIsFetchingDetail] = useState(false);
     const [isFilterOpen, setFilterOpen] = useState(false);
 
+    const styles = useMemo(
+        () =>
+            StyleSheet.create({
+                container: {
+                    flex: 1,
+                    backgroundColor: theme.colors.background.screen,
+                },
+                content: {
+                    flex: 1,
+                },
+                contentContainer: {
+                    paddingHorizontal: 24,
+                    paddingTop: 16,
+                    paddingBottom: 24,
+                },
+                feedback: {
+                    marginTop: 32,
+                },
+                error: {
+                    marginTop: 32,
+                    textAlign: 'center',
+                    color: theme.error[500],
+                    fontWeight: '600',
+                    paddingHorizontal: 24,
+                },
+                emptyState: {
+                    marginTop: 32,
+                    textAlign: 'center',
+                    color: theme.colors.text.secondary,
+                    fontSize: 16,
+                },
+            }),
+        [theme],
+    );
     useNotificationTimer(isAuthenticated);
 
     const filteredOpportunities = useMemo(() => {
@@ -129,7 +165,7 @@ export default function HomeScreen() {
             <FilterTabs />
 
             {(isLoading || isFetchingDetail) && (
-                <ActivityIndicator style={styles.feedback} size="large" color="#0000ff" />
+                <ActivityIndicator style={styles.feedback} size="large" color={theme.colors.primary.main} />
             )}
 
             {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -186,34 +222,3 @@ export default function HomeScreen() {
         </View>
     );
 }
-
-const styles = StyleSheet.create({
-    container: {
-        flex: 1,
-        backgroundColor: '#F5F6FA',
-    },
-    content: {
-        flex: 1,
-    },
-    contentContainer: {
-        paddingHorizontal: 24,
-        paddingTop: 16,
-        paddingBottom: 24,
-    },
-    feedback: {
-        marginTop: 32,
-    },
-    error: {
-        marginTop: 32,
-        textAlign: 'center',
-        color: '#D92D20',
-        fontWeight: '600',
-        paddingHorizontal: 24,
-    },
-    emptyState: {
-        marginTop: 32,
-        textAlign: 'center',
-        color: '#666',
-        fontSize: 16,
-    }
-});

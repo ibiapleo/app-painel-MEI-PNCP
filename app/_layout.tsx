@@ -1,26 +1,22 @@
 import { Stack } from 'expo-router';
+import { StatusBar } from 'expo-status-bar';
 import { useEffect } from 'react';
+import { SafeAreaProvider } from 'react-native-safe-area-context';
 
 import { resetAuthStateForDevReload } from '@/stores/auth/devResetAuthOnReload';
+import { useThemeStore } from '@/stores/theme/useThemeStore';
 
 export default function RootLayout() {
+  const mode = useThemeStore((state) => state.mode);
+
   useEffect(() => {
     void resetAuthStateForDevReload();
   }, []);
 
   return (
-    <Stack screenOptions={{ headerShown: false }}>
-      <Stack.Screen name="(onboarding)" options={{ headerShown: false }} />
-      <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-      <Stack.Screen name="(signup)" options={{ headerShown: false }} />
-      <Stack.Screen name="(tabs)" options={{ headerShown: false }} />
-      <Stack.Screen
-        name="(notifications)"
-        options={{
-          headerShown: false,
-          presentation: 'modal'
-        }}
-      />
-    </Stack>
+    <SafeAreaProvider>
+      <StatusBar style={mode === 'dark' ? 'light' : 'dark'} />
+      <Stack screenOptions={{ headerShown: false }} />
+    </SafeAreaProvider>
   );
 }

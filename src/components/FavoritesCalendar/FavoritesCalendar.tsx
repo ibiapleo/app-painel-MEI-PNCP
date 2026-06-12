@@ -1,6 +1,8 @@
-import { memo } from 'react';
+import { memo, useMemo } from 'react';
 import { Feather } from '@expo/vector-icons';
 import { Pressable, StyleSheet, Text, View } from 'react-native';
+
+import { useTheme } from '@/hooks/useTheme';
 
 export type MarkType = 'past' | 'future';
 
@@ -44,9 +46,83 @@ function FavoritesCalendarImpl({
     onPrevMonth,
     onNextMonth,
 }: FavoritesCalendarProps) {
+    const theme = useTheme();
     const year = month.getFullYear();
     const monthIndex = month.getMonth();
     const cells = buildGrid(year, monthIndex);
+
+    const styles = useMemo(
+        () =>
+            StyleSheet.create({
+                container: {
+                    paddingHorizontal: 24,
+                    paddingVertical: 12,
+                    backgroundColor: theme.colors.background.surface,
+                },
+                header: {
+                    flexDirection: 'row',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    marginBottom: 16,
+                },
+                headerTitle: {
+                    fontSize: 16,
+                    fontWeight: '700',
+                    color: theme.colors.text.primary,
+                },
+                nav: {
+                    flexDirection: 'row',
+                    gap: 12,
+                },
+                navButton: {
+                    padding: 4,
+                },
+                weekRow: {
+                    flexDirection: 'row',
+                    marginBottom: 8,
+                },
+                weekLabel: {
+                    flex: 1,
+                    textAlign: 'center',
+                    fontSize: 11,
+                    fontWeight: '600',
+                    color: theme.colors.text.secondary,
+                },
+                grid: {
+                    flexDirection: 'row',
+                    flexWrap: 'wrap',
+                },
+                cell: {
+                    width: `${100 / 7}%`,
+                    aspectRatio: 1,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                },
+                dayCircle: {
+                    width: 34,
+                    height: 34,
+                    borderRadius: 17,
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                },
+                dayCircleFuture: {
+                    backgroundColor: theme.colors.primary.main,
+                },
+                dayCirclePast: {
+                    backgroundColor: theme.colors.border.default,
+                },
+                dayText: {
+                    fontSize: 14,
+                    color: theme.colors.text.primary,
+                    fontWeight: '500',
+                },
+                dayTextOnPrimary: {
+                    color: theme.colors.text.onPrimary,
+                    fontWeight: '700',
+                },
+            }),
+        [theme],
+    );
 
     return (
         <View style={styles.container}>
@@ -56,10 +132,10 @@ function FavoritesCalendarImpl({
                 </Text>
                 <View style={styles.nav}>
                     <Pressable onPress={onPrevMonth} hitSlop={10} style={styles.navButton}>
-                        <Feather name="chevron-left" size={20} color="#202124" />
+                        <Feather name="chevron-left" size={20} color={theme.colors.text.primary} />
                     </Pressable>
                     <Pressable onPress={onNextMonth} hitSlop={10} style={styles.navButton}>
-                        <Feather name="chevron-right" size={20} color="#202124" />
+                        <Feather name="chevron-right" size={20} color={theme.colors.text.primary} />
                     </Pressable>
                 </View>
             </View>
@@ -107,72 +183,3 @@ function FavoritesCalendarImpl({
 }
 
 export const FavoritesCalendar = memo(FavoritesCalendarImpl);
-
-const styles = StyleSheet.create({
-    container: {
-        paddingHorizontal: 24,
-        paddingVertical: 12,
-        backgroundColor: '#FFFFFF',
-    },
-    header: {
-        flexDirection: 'row',
-        justifyContent: 'space-between',
-        alignItems: 'center',
-        marginBottom: 16,
-    },
-    headerTitle: {
-        fontSize: 16,
-        fontWeight: '700',
-        color: '#202124',
-    },
-    nav: {
-        flexDirection: 'row',
-        gap: 12,
-    },
-    navButton: {
-        padding: 4,
-    },
-    weekRow: {
-        flexDirection: 'row',
-        marginBottom: 8,
-    },
-    weekLabel: {
-        flex: 1,
-        textAlign: 'center',
-        fontSize: 11,
-        fontWeight: '600',
-        color: '#A6A6AA',
-    },
-    grid: {
-        flexDirection: 'row',
-        flexWrap: 'wrap',
-    },
-    cell: {
-        width: `${100 / 7}%`,
-        aspectRatio: 1,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    dayCircle: {
-        width: 34,
-        height: 34,
-        borderRadius: 17,
-        alignItems: 'center',
-        justifyContent: 'center',
-    },
-    dayCircleFuture: {
-        backgroundColor: '#0877FF',
-    },
-    dayCirclePast: {
-        backgroundColor: '#D4D6DB',
-    },
-    dayText: {
-        fontSize: 14,
-        color: '#202124',
-        fontWeight: '500',
-    },
-    dayTextOnPrimary: {
-        color: '#FFFFFF',
-        fontWeight: '700',
-    },
-});

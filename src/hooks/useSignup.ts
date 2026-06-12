@@ -1,8 +1,9 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Alert } from 'react-native';
-import { useRouter } from 'expo-router';
+import { useRouter, type Href } from 'expo-router';
 
 import { authService, locationService, type LocationState } from '@/services/authService';
+import { useAuthStore } from '@/stores/auth/useAuthStore';
 import { useSignupStore } from '@/stores/auth/useSignUpStore';
 
 export type SignupStep = 'step1' | 'step2' | 'step3';
@@ -40,6 +41,7 @@ export function formatCnpj(value: string) {
 
 export function useSignup(step: SignupStep) {
     const router = useRouter();
+    const fetchUserProfile = useAuthStore((state) => state.fetchUserProfile);
 
     const {
         draft,
@@ -57,35 +59,43 @@ export function useSignup(step: SignupStep) {
     const [isSubmitting, setIsSubmitting] = useState(false);
 	const [loadingCnaes, setLoadingCnaes] = useState(false);
 
-	useEffect(() => {
+    useEffect(() => {
         if (step !== 'step2') return;
 
         const rawCnpj = draft.cnpj.replace(/\D/g, '');
 
-        if (rawCnpj.length === 14 && isValidCnpj(draft.cnpj)) {
-            const fetchCnaes = async () => {
-                setLoadingCnaes(true);
-                try {
-                    const data = await authService.getCnaesByCnpj(rawCnpj);
-                    
-                    const allCnaes = [];
-                    if (data.primary_cnae) allCnaes.push(data.primary_cnae);
-                    if (data.secondary_cnaes?.length) allCnaes.push(...data.secondary_cnaes);
-                    
-                    setDraftField('cnaes', allCnaes);
-                    clearError('cnpj');
-                } catch (_error) {
-                    setDraftField('cnaes', []);
-                    setError('cnpj', 'CNPJ não encontrado ou erro na busca.');
-                } finally {
-                    setLoadingCnaes(false);
-                }
-            };
-            fetchCnaes();
-        } else if (rawCnpj.length < 14 && draft.cnaes.length > 0) {
+        if (rawCnpj.length !== 14 || !isValidCnpj(draft.cnpj)) return;
+
+        const fetchCnaes = async () => {
+            setLoadingCnaes(true);
+            try {
+                const data = await authService.getCnaesByCnpj(rawCnpj);
+
+                const allCnaes = [];
+                if (data.primary_cnae) allCnaes.push(data.primary_cnae);
+                if (data.secondary_cnaes?.length) allCnaes.push(...data.secondary_cnaes);
+
+                setDraftField('cnaes', allCnaes);
+                clearError('cnpj');
+            } catch (_error) {
+                setDraftField('cnaes', []);
+                setError('cnpj', 'CNPJ não encontrado ou erro na busca.');
+            } finally {
+                setLoadingCnaes(false);
+            }
+        };
+        fetchCnaes();
+    }, [draft.cnpj, step, setDraftField, clearError, setError]);
+
+    useEffect(() => {
+        if (step !== 'step2') return;
+
+        const rawCnpj = draft.cnpj.replace(/\D/g, '');
+
+        if (rawCnpj.length < 14 && draft.cnaes.length > 0) {
             setDraftField('cnaes', []);
         }
-    }, [draft.cnpj, step]);
+    }, [draft.cnpj, draft.cnaes.length, step, setDraftField]);
 
     useEffect(() => {
         if (step !== 'step1') return;
@@ -181,12 +191,13 @@ export function useSignup(step: SignupStep) {
                 email: draft.email,
                 password: draft.password,
                 cnpj: rawCnpj,
-                interested_state_ids: draft.selectedStates,
+                interested_state_siglas: draft.selectedStates,
                 cnae_ids: draft.cnaes.map(cnae => cnae.id),
             });
 
+            await fetchUserProfile();
             completeRegistration();
-            router.push('/(signup)/success' as any);
+            router.replace('/(tabs)' as Href);
             return true;
         } catch (error: any) {
             console.log("=== ERRO CAPTURADO NO TRY/CATCH ===");
