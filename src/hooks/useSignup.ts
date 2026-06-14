@@ -12,22 +12,9 @@ export function isValidEmail(value: string) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-export function isValidCpf(value: string) {
-    const digits = value.replace(/\D/g, '');
-    return digits.length === 11;
-}
-
 export function isValidCnpj(value: string) {
     const digits = value.replace(/\D/g, '');
     return digits.length === 14;
-}
-
-export function formatCpf(value: string) {
-    const digits = value.replace(/\D/g, '').slice(0, 11);
-    return digits
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
 export function formatCnpj(value: string) {
@@ -120,16 +107,6 @@ export function useSignup(step: SignupStep) {
         return states.filter((state) => state.nome.toLowerCase().includes(query));
     }, [searchText, states, step]);
 
-    const handleCpfBlur = () => {
-        if (draft.cpf) {
-            if (isValidCpf(draft.cpf)) {
-                clearError('cpf');
-            } else {
-                setError('cpf', 'Digite um CPF válido');
-            }
-        }
-    };
-
     const handleCnpjBlur = () => {
         if (draft.cnpj) {
             if (isValidCnpj(draft.cnpj)) {
@@ -141,13 +118,11 @@ export function useSignup(step: SignupStep) {
     };
 
     const handleStepTwoNext = () => {
-        const cpfIsValid = isValidCpf(draft.cpf);
         const cnpjIsValid = isValidCnpj(draft.cnpj);
 
-        if (!cpfIsValid) setError('cpf', 'Digite um CPF válido');
         if (!cnpjIsValid) setError('cnpj', 'Digite um CNPJ válido');
 
-        if (!cpfIsValid || !cnpjIsValid) return false;
+        if (!cnpjIsValid) return false;
 
         router.push('/(signup)/step3' as any);
         return true;
@@ -246,10 +221,8 @@ export function useSignup(step: SignupStep) {
             draft,
             errors,
             setDraftField,
-            handleCpfBlur,
             handleCnpjBlur,
             handleNext: handleStepTwoNext,
-            formatCpf,
             formatCnpj,
 			loadingCnaes
         },

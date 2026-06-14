@@ -6,8 +6,8 @@
 
 | Passo | Campos | Tela |
 |-------|--------|------|
-| 1 | UFs de interesse (`selectedStates`: ids IBGE) | `StepOneScreen` |
-| 2 | Nome, CPF, CNPJ | `StepTwoScreen` |
+| 1 | UFs de interesse (`selectedStates`: siglas) | `StepOneScreen` |
+| 2 | Nome, CNPJ | `StepTwoScreen` |
 | 3 | E-mail, senha | `StepThreeScreen` |
 | — | `completeRegistration()` | Navega para success → login |
 
@@ -21,10 +21,9 @@ Rascunho salvo localmente a cada alteração; **não há** `POST` parcial ao ser
 
 ```ts
 export interface SignupDraft {
-  selectedStates: string[];  // ids IBGE (string)
+  selectedStates: string[];  // siglas (ex: "SP", "RJ")
   name: string;
-  cpf: string;               // mascarado no UI; enviar só dígitos ao back
-  cnpj: string;
+  cnpj: string;              // mascarado no UI; enviar só dígitos ao back
   email: string;
   password: string;
 }
@@ -35,11 +34,10 @@ export interface SignupDraft {
 ```ts
 export interface RegisterUserRequest {
   name: string;
-  cpf: string;                 // 11 dígitos
   cnpj: string;                // 14 dígitos
   email: string;
   password: string;
-  interestedStateIds: string[]; // ids IBGE
+  interestedStateIds: string[]; // siglas (ex: "SP", "RJ")
 }
 ```
 
@@ -68,7 +66,7 @@ POST /users/register
 Content-Type: application/json
 ```
 
-**Body** → `RegisterUserRequest` (campos sem máscara de CPF/CNPJ).
+**Body** → `RegisterUserRequest` (campos sem máscara de CNPJ).
 
 **201 Created** → `RegisterUserResponse`
 
@@ -82,7 +80,7 @@ Content-Type: application/json
 }
 ```
 
-**422 Unprocessable Entity** — CPF/CNPJ inválido, senha fraca, lista de UFs vazia (`VALIDATION_ERROR` com `fields` opcional).
+**422 Unprocessable Entity** — CNPJ inválido, senha fraca, lista de UFs vazia (`VALIDATION_ERROR` com `fields` opcional).
 
 ---
 
@@ -133,7 +131,7 @@ Authorization: Bearer <token temporário ou anônimo>
 }
 ```
 
-Códigos esperados: `EMAIL_ALREADY_EXISTS`, `CPF_ALREADY_EXISTS`, `CNPJ_ALREADY_EXISTS`, `VALIDATION_ERROR`, `INTERNAL_ERROR`.
+Códigos esperados: `EMAIL_ALREADY_EXISTS`, `CNPJ_ALREADY_EXISTS`, `VALIDATION_ERROR`, `INTERNAL_ERROR`.
 
 ## Como o front consome hoje (mock)
 
