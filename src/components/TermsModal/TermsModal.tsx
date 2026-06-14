@@ -63,7 +63,7 @@ export default function TermsModal({ visible, onCancel, onAccept }: TermsModalPr
             <Text style={styles.listItem}>• Usar os materiais para qualquer finalidade comercial ou para exibição pública (comercial ou não comercial)</Text>
             <Text style={styles.listItem}>• Tentar descompilar ou fazer engenharia reversa de qualquer software contido no site LicitaFácil</Text>
             <Text style={styles.listItem}>• Remover quaisquer direitos autorais ou outras notações de propriedade dos materiais</Text>
-            <Text style={styles.listItem}>• Transferir os materiais para outra pessoa ou 'espelhar' os materiais em qualquer outro servidor</Text>
+            <Text style={styles.listItem}>• Transferir os materiais para outra pessoa ou &apos;espelhar&apos; os materiais em qualquer outro servidor</Text>
             
             <Text style={styles.paragraph}>
               Esta licença será automaticamente rescindida se você violar alguma dessas restrições e poderá ser rescindida por LicitaFácil a qualquer momento. Ao encerrar a visualização desses materiais ou após o término desta licença, você deve apagar todos os materiais baixados em sua posse, seja em formato eletrônico ou impresso.
@@ -71,7 +71,7 @@ export default function TermsModal({ visible, onCancel, onAccept }: TermsModalPr
 
             <Text style={styles.sectionTitle}>3. Isenção de responsabilidade</Text>
             <Text style={styles.listItem}>
-              • Os materiais no site da LicitaFácil são fornecidos 'como estão'. LicitaFácil não oferece garantias, expressas ou implícitas, e, por este meio, isenta e nega todas as outras garantias, incluindo, sem limitação, garantias implícitas ou condições de comercialização, adequação a um fim específico ou não violação de propriedade intelectual ou outra violação de direitos.
+              • Os materiais no site da LicitaFácil são fornecidos &apos;como estão&apos;. LicitaFácil não oferece garantias, expressas ou implícitas, e, por este meio, isenta e nega todas as outras garantias, incluindo, sem limitação, garantias implícitas ou condições de comercialização, adequação a um fim específico ou não violação de propriedade intelectual ou outra violação de direitos.
             </Text>
             <Text style={styles.listItem}>
               • Além disso, o LicitaFácil não garante ou faz qualquer representação relativa à precisão, aos resultados prováveis ou à confiabilidade do uso dos materiais em seu site ou de outra forma relacionado a esses materiais ou em sites vinculados a este site.
