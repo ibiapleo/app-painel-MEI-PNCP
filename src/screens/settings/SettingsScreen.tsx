@@ -4,6 +4,7 @@ import { useRouter } from "expo-router";
 
 import SettingsMenuButton from "@/components/SettingsMenuButton/SettingsMenuButton";
 import LogOutModal from "@/components/LogOutModal/LogOutModal";
+import PrivacyPolicyModal from "@/components/PrivacyPolicyModal/PrivacyPolicyModal";
 
 import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/auth/useAuthStore';
@@ -13,6 +14,7 @@ export default function SettingsScreen() {
   const router = useRouter();
   const theme = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
+  const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
   const [appearanceExpanded, setAppearanceExpanded] = useState(false);
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
@@ -125,7 +127,10 @@ export default function SettingsScreen() {
         )}
         <View style={styles.line} />
 
-        <SettingsMenuButton title="Privacidade e Segurança" />
+        <SettingsMenuButton 
+          title="Privacidade e Segurança" 
+          onPress={() => setPrivacyModalVisible(true)}
+        />
         <View style={styles.line} />
 
         <SettingsMenuButton
@@ -137,6 +142,11 @@ export default function SettingsScreen() {
           visible={modalVisible}
           onCancel={() => setModalVisible(false)}
           onLogOut={handleLogOut}
+        />
+
+        <PrivacyPolicyModal
+          visible={privacyModalVisible}
+          onClose={() => setPrivacyModalVisible(false)}
         />
       </View>
     </View>

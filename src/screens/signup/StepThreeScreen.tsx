@@ -10,6 +10,7 @@ import { SafeAreaView } from 'react-native-safe-area-context';
 import { Feather } from '@expo/vector-icons';
 import StepIndicator from '@/components/StepIndicator/StepIndicator';
 import Button from '@/components/Button/Button';
+import TermsModal from '@/components/TermsModal/TermsModal';
 import { globalStyles, tokens } from '@/theme';
 import { useSignup } from '../../hooks/useSignup';
 
@@ -27,6 +28,23 @@ export default function StepThreeScreen() {
 
     const [focusedField, setFocusedField] = useState<string | null>(null);
     const [showPassword, setShowPassword] = useState(false);
+    const [showTermsModal, setShowTermsModal] = useState(false);
+
+    const handleConfirm = () => {
+        if (!draft.email || !draft.password) {
+            return;
+        }
+        setShowTermsModal(true);
+    };
+
+    const handleAcceptTerms = () => {
+        setShowTermsModal(false);
+        handleNext();
+    };
+
+    const handleDeclineTerms = () => {
+        setShowTermsModal(false);
+    };
 
     return (
         <SafeAreaView style={styles.safeArea}>
@@ -107,12 +125,18 @@ export default function StepThreeScreen() {
                 <View style={styles.footerSection}>
                     <Button 
                         title={isSubmitting ? "Confirmando..." : "Confirmar"} 
-                        onPress={handleNext} 
+                        onPress={handleConfirm} 
                         size="md" 
                         disabled={isSubmitting}
                     />
                 </View>
             </View>
+            
+            <TermsModal 
+                visible={showTermsModal}
+                onAccept={handleAcceptTerms}
+                onCancel={handleDeclineTerms}
+            />
         </SafeAreaView>
     );
 }

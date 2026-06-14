@@ -49,11 +49,11 @@ export default function StepTwoScreen() {
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Nome</Text>
+                        <Text style={styles.label}>Apelido</Text>
                         <TextInput
                             value={draft.name}
                             onChangeText={(text) => setDraftField('name', text)}
-                            placeholder="Seu nome completo"
+                            placeholder="Como você gostaria de ser chamado(a)?"
                             placeholderTextColor={tokens.colors.text.secondary}
                             selectionColor={tokens.colors.primary[500]}
                             onFocus={() => setFocusedField('name')}
