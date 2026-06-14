@@ -19,6 +19,7 @@ export interface SignupDraft {
 export interface SignupErrors {
   cnpj: string;
   email: string;
+  password: string;
 }
 
 interface SignupStoreState {
@@ -51,6 +52,7 @@ const initialDraft: SignupDraft = {
 const initialErrors: SignupErrors = {
   cnpj: '',
   email: '',
+  password: '',
 };
 
 export const useSignupStore = create<SignupStore>()(

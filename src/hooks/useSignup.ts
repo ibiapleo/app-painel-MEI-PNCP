@@ -12,6 +12,23 @@ export function isValidEmail(value: string) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
+export function isValidPassword(value: string): boolean {
+    if (value.length < 8) return false;
+    if (!/[0-9]/.test(value)) return false;
+    if (!/[A-Z]/.test(value)) return false;
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value)) return false;
+    return true;
+}
+
+export function validatePassword(value: string): string | null {
+    if (!value) return 'A senha é obrigatória';
+    if (value.length < 8) return 'A senha deve ter no mínimo 8 caracteres';
+    if (!/[0-9]/.test(value)) return 'A senha deve conter pelo menos um número';
+    if (!/[A-Z]/.test(value)) return 'A senha deve conter pelo menos uma letra maiúscula';
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value)) return 'A senha deve conter pelo menos um caractere especial';
+    return null;
+}
+
 export function isValidCnpj(value: string) {
     const digits = value.replace(/\D/g, '');
     return digits.length === 14;
@@ -138,14 +155,27 @@ export function useSignup(step: SignupStep) {
         }
     };
 
+    const handlePasswordBlur = () => {
+        if (draft.password.trim()) {
+            const errorMessage = validatePassword(draft.password);
+            if (errorMessage) {
+                setError('password', errorMessage);
+            } else {
+                clearError('password');
+            }
+        }
+    };
+
     const handleStepThreeNext = async () => {
         if (!isValidEmail(draft.email)) {
             setError('email', 'Digite um email válido');
             return false;
         }
 
-        if (!draft.password || draft.password.length < 6) {
-            Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres.");
+        const passwordError = validatePassword(draft.password);
+        if (passwordError) {
+            setError('password', passwordError);
+            Alert.alert("Erro", passwordError);
             return false;
         }
 
@@ -231,6 +261,7 @@ export function useSignup(step: SignupStep) {
             errors,
             setDraftField,
             handleEmailBlur,
+            handlePasswordBlur,
             handleNext: handleStepThreeNext,
             isSubmitting,
         },

@@ -22,6 +22,7 @@ export default function StepThreeScreen() {
         errors,
         setDraftField,
         handleEmailBlur,
+        handlePasswordBlur,
         handleNext,
         isSubmitting
     } = signup.step3;
@@ -100,11 +101,15 @@ export default function StepThreeScreen() {
                                 secureTextEntry={!showPassword}
                                 editable={!isSubmitting}
                                 onFocus={() => setFocusedField('password')}
-                                onBlur={() => setFocusedField(null)}
+                                onBlur={() => {
+                                    setFocusedField(null);
+                                    handlePasswordBlur();
+                                }}
                                 style={[
                                     styles.input,
                                     styles.passwordInput,
-                                    focusedField === 'password' && { borderColor: tokens.colors.primary[500] },
+                                    errors.password && { borderColor: tokens.colors.error[500] },
+                                    focusedField === 'password' && !errors.password && { borderColor: tokens.colors.primary[500] },
                                 ]}
                             />
                             <TouchableOpacity
@@ -119,6 +124,7 @@ export default function StepThreeScreen() {
                                 />
                             </TouchableOpacity>
                         </View>
+                        {errors.password ? <Text style={styles.errorText}>{errors.password}</Text> : null}
                     </View>
                 </View>
 
