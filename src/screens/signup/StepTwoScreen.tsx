@@ -18,11 +18,9 @@ export default function StepTwoScreen() {
     const { 
         draft, 
         errors, 
-        setDraftField, 
-        handleCpfBlur, 
+        setDraftField,
         handleCnpjBlur, 
-        handleNext, 
-        formatCpf, 
+        handleNext,
         formatCnpj,
         loadingCnaes
     } = signup.step2;
@@ -51,11 +49,11 @@ export default function StepTwoScreen() {
                     showsVerticalScrollIndicator={false}
                 >
                     <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>Nome</Text>
+                        <Text style={styles.label}>Apelido</Text>
                         <TextInput
                             value={draft.name}
                             onChangeText={(text) => setDraftField('name', text)}
-                            placeholder="Seu nome completo"
+                            placeholder="Como você gostaria de ser chamado(a)?"
                             placeholderTextColor={tokens.colors.text.secondary}
                             selectionColor={tokens.colors.primary[500]}
                             onFocus={() => setFocusedField('name')}
@@ -65,29 +63,6 @@ export default function StepTwoScreen() {
                                 focusedField === 'name' && { borderColor: tokens.colors.primary[500] },
                             ]}
                         />
-                    </View>
-
-                    <View style={styles.fieldGroup}>
-                        <Text style={styles.label}>CPF</Text>
-                        <TextInput
-                            value={draft.cpf}
-                            onChangeText={(text) => setDraftField('cpf', formatCpf(text))}
-                            placeholder="000.000.000-00"
-                            keyboardType="number-pad"
-                            placeholderTextColor={tokens.colors.text.secondary}
-                            selectionColor={tokens.colors.primary[500]}
-                            onFocus={() => setFocusedField('cpf')}
-                            onBlur={() => {
-                                setFocusedField(null);
-                                handleCpfBlur();
-                            }}
-                            style={[
-                                styles.input,
-                                errors.cpf && { borderColor: tokens.colors.error[500] },
-                                focusedField === 'cpf' && !errors.cpf && { borderColor: tokens.colors.primary[500] },
-                            ]}
-                        />
-                        {errors.cpf ? <Text style={styles.errorText}>{errors.cpf}</Text> : null}
                     </View>
 
                     <View style={styles.fieldGroup}>

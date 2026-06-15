@@ -9,7 +9,6 @@ export interface Cnae {
 
 export interface SignupDraft {
   name: string;
-  cpf: string;
   cnpj: string;
   email: string;
   password: string;
@@ -18,9 +17,9 @@ export interface SignupDraft {
 }
 
 export interface SignupErrors {
-  cpf: string;
   cnpj: string;
   email: string;
+  password: string;
 }
 
 interface SignupStoreState {
@@ -43,7 +42,6 @@ type SignupStore = SignupStoreState & SignupStoreActions;
 
 const initialDraft: SignupDraft = {
   name: '',
-  cpf: '',
   cnpj: '',
   email: '',
   password: '',
@@ -52,9 +50,9 @@ const initialDraft: SignupDraft = {
 };
 
 const initialErrors: SignupErrors = {
-  cpf: '',
   cnpj: '',
   email: '',
+  password: '',
 };
 
 export const useSignupStore = create<SignupStore>()(
@@ -69,8 +67,7 @@ export const useSignupStore = create<SignupStore>()(
         set((state) => {
           const nextErrors = { ...state.errors };
 
-          if (field === 'cpf') nextErrors.cpf = '';
-          else if (field === 'cnpj') nextErrors.cnpj = '';
+          if (field === 'cnpj') nextErrors.cnpj = '';
           else if (field === 'email') nextErrors.email = '';
 
           return {

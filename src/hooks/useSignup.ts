@@ -12,22 +12,26 @@ export function isValidEmail(value: string) {
     return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
 }
 
-export function isValidCpf(value: string) {
-    const digits = value.replace(/\D/g, '');
-    return digits.length === 11;
+export function isValidPassword(value: string): boolean {
+    if (value.length < 8) return false;
+    if (!/[0-9]/.test(value)) return false;
+    if (!/[A-Z]/.test(value)) return false;
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value)) return false;
+    return true;
+}
+
+export function validatePassword(value: string): string | null {
+    if (!value) return 'A senha é obrigatória';
+    if (value.length < 8) return 'A senha deve ter no mínimo 8 caracteres';
+    if (!/[0-9]/.test(value)) return 'A senha deve conter pelo menos um número';
+    if (!/[A-Z]/.test(value)) return 'A senha deve conter pelo menos uma letra maiúscula';
+    if (!/[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]/.test(value)) return 'A senha deve conter pelo menos um caractere especial';
+    return null;
 }
 
 export function isValidCnpj(value: string) {
     const digits = value.replace(/\D/g, '');
     return digits.length === 14;
-}
-
-export function formatCpf(value: string) {
-    const digits = value.replace(/\D/g, '').slice(0, 11);
-    return digits
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d)/, '$1.$2')
-        .replace(/(\d{3})(\d{1,2})$/, '$1-$2');
 }
 
 export function formatCnpj(value: string) {
@@ -120,16 +124,6 @@ export function useSignup(step: SignupStep) {
         return states.filter((state) => state.nome.toLowerCase().includes(query));
     }, [searchText, states, step]);
 
-    const handleCpfBlur = () => {
-        if (draft.cpf) {
-            if (isValidCpf(draft.cpf)) {
-                clearError('cpf');
-            } else {
-                setError('cpf', 'Digite um CPF válido');
-            }
-        }
-    };
-
     const handleCnpjBlur = () => {
         if (draft.cnpj) {
             if (isValidCnpj(draft.cnpj)) {
@@ -141,13 +135,11 @@ export function useSignup(step: SignupStep) {
     };
 
     const handleStepTwoNext = () => {
-        const cpfIsValid = isValidCpf(draft.cpf);
         const cnpjIsValid = isValidCnpj(draft.cnpj);
 
-        if (!cpfIsValid) setError('cpf', 'Digite um CPF válido');
         if (!cnpjIsValid) setError('cnpj', 'Digite um CNPJ válido');
 
-        if (!cpfIsValid || !cnpjIsValid) return false;
+        if (!cnpjIsValid) return false;
 
         router.push('/(signup)/step3' as any);
         return true;
@@ -163,14 +155,27 @@ export function useSignup(step: SignupStep) {
         }
     };
 
+    const handlePasswordBlur = () => {
+        if (draft.password.trim()) {
+            const errorMessage = validatePassword(draft.password);
+            if (errorMessage) {
+                setError('password', errorMessage);
+            } else {
+                clearError('password');
+            }
+        }
+    };
+
     const handleStepThreeNext = async () => {
         if (!isValidEmail(draft.email)) {
             setError('email', 'Digite um email válido');
             return false;
         }
 
-        if (!draft.password || draft.password.length < 6) {
-            Alert.alert("Erro", "A senha deve ter pelo menos 6 caracteres.");
+        const passwordError = validatePassword(draft.password);
+        if (passwordError) {
+            setError('password', passwordError);
+            Alert.alert("Erro", passwordError);
             return false;
         }
 
@@ -246,10 +251,8 @@ export function useSignup(step: SignupStep) {
             draft,
             errors,
             setDraftField,
-            handleCpfBlur,
             handleCnpjBlur,
             handleNext: handleStepTwoNext,
-            formatCpf,
             formatCnpj,
 			loadingCnaes
         },
@@ -258,6 +261,7 @@ export function useSignup(step: SignupStep) {
             errors,
             setDraftField,
             handleEmailBlur,
+            handlePasswordBlur,
             handleNext: handleStepThreeNext,
             isSubmitting,
         },
