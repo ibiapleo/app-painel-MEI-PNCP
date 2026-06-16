@@ -7,6 +7,7 @@ import LogOutModal from "@/components/LogOutModal/LogOutModal";
 import PrivacyPolicyModal from "@/components/PrivacyPolicyModal/PrivacyPolicyModal";
 import EditProfileModal from "@/components/EditProfileModal/EditProfileModal";
 
+import { formatCnpj } from '@/hooks/useSignup';
 import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/auth/useAuthStore';
 import { useThemeStore } from '@/stores/theme/useThemeStore';
@@ -126,7 +127,7 @@ export default function SettingsScreen() {
             <View style={styles.userContainer}>
                 <Text style={styles.userTitle}>{user?.name}</Text>
                 {user?.company_name && <Text style={styles.userText}>{user.company_name}</Text>}
-                {user?.cnpj && <Text style={styles.userText}>{user.cnpj}</Text>}
+                {user?.cnpj && <Text style={styles.userText}>{formatCnpj(user.cnpj)}</Text>}
                 <Text style={styles.userText}>{user?.email}</Text>
             </View>
 
