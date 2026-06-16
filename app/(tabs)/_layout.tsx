@@ -1,44 +1,79 @@
-import { Tabs } from 'expo-router';
-import React from 'react';
-import { Platform } from 'react-native';
+import { Ionicons } from '@expo/vector-icons';
+import { Tabs, useRouter } from 'expo-router';
+import { useEffect } from 'react';
 
-import { HapticTab } from '@/components/HapticTab';
-import { IconSymbol } from '@/components/ui/IconSymbol';
-import TabBarBackground from '@/components/ui/TabBarBackground';
-import { Colors } from '@/constants/Colors';
-import { useColorScheme } from '@/hooks/useColorScheme';
+import ProfileIcon from '@/components/icons/ProfileIcon';
+import { useTheme } from '@/hooks/useTheme';
+import { useAuthStore } from '@/stores/auth/useAuthStore';
 
-export default function TabLayout() {
-  const colorScheme = useColorScheme();
+export default function TabsLayout() {
+    const theme = useTheme();
+    const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+    const router = useRouter();
 
-  return (
-    <Tabs
-      screenOptions={{
-        tabBarActiveTintColor: Colors[colorScheme ?? 'light'].tint,
-        headerShown: false,
-        tabBarButton: HapticTab,
-        tabBarBackground: TabBarBackground,
-        tabBarStyle: Platform.select({
-          ios: {
-            position: 'absolute',
-          },
-          default: {},
-        }),
-      }}>
-      <Tabs.Screen
-        name="index"
-        options={{
-          title: 'Painel',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="house.fill" color={color} />,
-        }}
-      />
-      <Tabs.Screen
-        name="buscar"
-        options={{
-          title: 'Buscar',
-          tabBarIcon: ({ color }) => <IconSymbol size={28} name="magnifyingglass" color={color} />,
-        }}
-      />
-    </Tabs>
-  );
+    useEffect(() => {
+        if (!isAuthenticated) {
+            router.replace('/(auth)/login');
+        }
+    }, [isAuthenticated, router]);
+
+    return (
+        <Tabs
+            screenOptions={{
+                headerShown: false,
+                tabBarActiveTintColor: theme.colors.tabBar.active,
+                tabBarInactiveTintColor: theme.colors.tabBar.inactive,
+                tabBarStyle: {
+                    height: 82,
+                    paddingTop: 8,
+                    paddingBottom: 12,
+                    backgroundColor: theme.colors.tabBar.background,
+                    borderTopWidth: 1,
+                    borderTopColor: theme.colors.tabBar.border,
+                },
+                tabBarLabelStyle: {
+                    fontSize: 11,
+                    fontWeight: '600',
+                },
+            }}
+        >
+            <Tabs.Screen
+                name="index"
+                options={{
+                    title: 'Explore',
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? 'compass' : 'compass-outline'}
+                            size={22}
+                            color={color}
+                        />
+                    ),
+                }}
+            />
+
+            <Tabs.Screen
+                name="painel"
+                options={{
+                    title: 'Painel',
+                    tabBarIcon: ({ color, focused }) => (
+                        <Ionicons
+                            name={focused ? 'grid' : 'grid-outline'}
+                            size={22}
+                            color={color}
+                        />
+                    ),
+                }}
+            />
+
+            <Tabs.Screen
+                name="settings"
+                options={{
+                    title: 'Perfil',
+                    tabBarIcon: ({ color }) => (
+                        <ProfileIcon color={color} size={22} />
+                    ),
+                }}
+            />
+        </Tabs>
+    );
 }
