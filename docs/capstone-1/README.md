@@ -1,7 +1,7 @@
 # Capstone 1 — Protótipo e identidade visual
 
 - **Data de entrega:** 08/05/2026
-- **Status:** concluído
+- **Status:** Concluído
 
 ## Escopo
 
