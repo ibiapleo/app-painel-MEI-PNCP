@@ -12,7 +12,7 @@ export interface AuthUser {
     description: string;
   }[];
   interested_state_siglas?: string[];
-  interested_states?: Array<{ sigla: string }>;
+  interested_states?: { sigla: string }[];
 }
 
 export interface AuthState {

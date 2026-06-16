@@ -57,7 +57,7 @@ export default function EditProfileModal({
     if (visible && states.length === 0) {
       loadStates();
     }
-  }, [visible]);
+  }, [visible, states.length]);
 
   useEffect(() => {
     if (!visible) {
