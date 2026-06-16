@@ -12,7 +12,7 @@ import {
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
 
-import { useTheme } from '@/hooks/useTheme';
+import {useTheme} from '@/hooks/useTheme';
 import { tokens } from '@/theme';
 import { locationService, type LocationState } from '@/services/authService';
 
@@ -43,7 +43,6 @@ export default function EditProfileModal({
                                          }: EditProfileModalProps) {
     const theme = useTheme();
     const [name, setName] = useState(initialData.name || '');
-    const [cnpj, setCnpj] = useState(initialData.cnpj || '');
     const [selectedStates, setSelectedStates] = useState<string[]>(
         initialData.interested_state_siglas || []
     );
@@ -62,7 +61,7 @@ export default function EditProfileModal({
     useEffect(() => {
         if (!visible) {
             setName(initialData.name || '');
-            setCnpj(initialData.cnpj || '');
+            setCnpj(formatCnpj(initialData.cnpj || ''));
             setSelectedStates(initialData.interested_state_siglas || []);
             setFocusedField(null);
             setExpandedStates(false);
@@ -83,13 +82,15 @@ export default function EditProfileModal({
     };
 
     const formatCnpj = (value: string) => {
-        const numbers = value.replace(/\D/g, '');
-        if (numbers.length <= 2) return numbers;
-        if (numbers.length <= 5) return `${numbers.slice(0, 2)}.${numbers.slice(2)}`;
-        if (numbers.length <= 8)
-            return `${numbers.slice(0, 2)}.${numbers.slice(2, 5)}.${numbers.slice(5)}`;
-        return `${numbers.slice(0, 2)}.${numbers.slice(2, 5)}.${numbers.slice(5, 8)}/${numbers.slice(8, 12)}-${numbers.slice(12, 14)}`;
+        const numbers = value.replace(/\D/g, '').slice(0, 14);
+        return numbers
+            .replace(/^(\d{2})(\d)/, '$1.$2')
+            .replace(/^(\d{2})\.(\d{3})(\d)/, '$1.$2.$3')
+            .replace(/\.(\d{3})(\d)/, '.$1/$2')
+            .replace(/(\d{4})(\d)/, '$1-$2');
     };
+
+    const [cnpj, setCnpj] = useState(() => formatCnpj(initialData.cnpj || ''));
 
     const handleCnpjChange = (value: string) => {
         setCnpj(formatCnpj(value));
@@ -230,8 +231,8 @@ export default function EditProfileModal({
                     marginBottom: 8,
                 },
                 stateItemSelected: {
-                    backgroundColor: tokens.colors.primary[50],
-                    borderColor: tokens.colors.primary[500],
+                    backgroundColor: theme.isDark ? tokens.colors.neutral[700] : tokens.colors.primary[50],
+                    borderColor: theme.colors.primary.main,
                 },
                 stateText: {
                     fontSize: 14,
@@ -239,7 +240,7 @@ export default function EditProfileModal({
                     fontWeight: '500',
                 },
                 stateTextSelected: {
-                    color: tokens.colors.primary[500],
+                    color: theme.colors.primary.main,
                 },
                 selectedStatesTag: {
                     flexDirection: 'row',
@@ -248,17 +249,17 @@ export default function EditProfileModal({
                     marginTop: 8,
                 },
                 stateTag: {
-                    backgroundColor: tokens.colors.primary[50],
                     borderRadius: 6,
                     paddingHorizontal: 10,
                     paddingVertical: 4,
                     borderWidth: 1,
-                    borderColor: tokens.colors.primary[500],
+                    backgroundColor: theme.isDark ? tokens.colors.neutral[700] : tokens.colors.primary[50],
+                    borderColor: theme.colors.primary.main,
                 },
                 stateTagText: {
                     fontSize: 12,
                     fontWeight: '500',
-                    color: tokens.colors.primary[500],
+                    color: theme.colors.primary.main,
                 },
                 buttonContainer: {
                     flexDirection: 'row',
