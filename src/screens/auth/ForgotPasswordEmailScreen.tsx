@@ -15,6 +15,7 @@ import Button from '@/components/Button/Button';
 import { usePasswordRecoveryStore } from '@/stores/auth/usePasswordRecoveryStore';
 import { authService } from '@/services/authService';
 import { tokens } from '@/theme';
+import { getApiErrorMessage } from '@/utils/apiError';
 
 function isValidEmail(value: string) {
   return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value.trim());
@@ -47,8 +48,8 @@ export default function ForgotPasswordEmailScreen() {
         pathname: '/(auth)/forgot-password/code',
         params: { email: email.trim() },
       } as Href);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Erro ao processar solicitação.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Erro ao processar solicitação.'));
     } finally {
       setIsLoading(false);
     }

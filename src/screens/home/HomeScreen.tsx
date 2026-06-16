@@ -19,6 +19,7 @@ import {
     VALUE_RANGE_MIN,
 } from '@/stores/filters/useFiltersStore';
 import type { OpportunityDetail } from '@/types/opportunity';
+import { getCardDeadlineLines, getDeadlineUrgency } from '@/utils/opportunityDeadline';
 
 const UF_BY_STATE: Record<string, string> = {
     'Acre': 'AC', 'Alagoas': 'AL', 'Amapá': 'AP', 'Amazonas': 'AM',
@@ -31,14 +32,6 @@ const UF_BY_STATE: Record<string, string> = {
     'Santa Catarina': 'SC', 'São Paulo': 'SP', 'Sergipe': 'SE',
     'Tocantins': 'TO',
 };
-
-function formatDaysRemaining(days: number): string {
-    if (days < 0) return 'Encerrado';
-    if (days === 0) return 'Encerra hoje';
-    if (days === 1) return '1 dia restante';
-    return `${days} dias restantes`;
-}
-
 
 let searchTimeout: ReturnType<typeof setTimeout>;
 
@@ -195,7 +188,8 @@ export default function HomeScreen() {
                                 style: 'currency',
                                 currency: 'BRL',
                             })}
-                            daysRemaining={formatDaysRemaining(opportunity.daysRemaining)}
+                            deadlineLines={getCardDeadlineLines(opportunity)}
+                            deadlineUrgency={getDeadlineUrgency(opportunity)}
                             isFavorite={opportunity.isFavorite}
                             compatibilityLabel={opportunity.compatibilityLabel}
                             onToggleFavorite={() => toggleFavorite(opportunity.id)}

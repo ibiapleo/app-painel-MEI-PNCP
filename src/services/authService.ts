@@ -80,6 +80,14 @@ export const authService = {
     return response.data;
   },
 
+  async updateProfile(data: {
+    name?: string;
+    interested_state_siglas?: string[];
+  }) {
+    const response = await api.patch('/users/me', data);
+    return response.data;
+  },
+
   async getCnaesByCnpj(cnpj: string) {
     const response = await api.get('/cnpj/cnaes', {
       params: { cnpj: cnpj.replace(/\D/g, '') },

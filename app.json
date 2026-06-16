@@ -2,27 +2,32 @@
   "expo": {
     "name": "Painel MEI PNCP",
     "slug": "app-painel-mei-pncp",
-    "version": "1.0.0",
+    "version": "1.0.1",
     "orientation": "portrait",
     "scheme": "mypainelmeipncp",
     "userInterfaceStyle": "automatic",
     "newArchEnabled": false,
-    "ios": {
-      "supportsTablet": true
-    },
     "web": {
       "bundler": "metro",
       "output": "static"
     },
     "plugins": [
       "expo-router",
-      "expo-splash-screen"
+      "expo-splash-screen",
+      "expo-font",
+      "expo-secure-store"
     ],
     "experiments": {
       "typedRoutes": true
     },
-    "extra": {
-      "IBGE_API": "https://servicodados.ibge.gov.br/api/v1"
+    "android": {
+      "package": "com.licitafacil",
+      "versionCode": 1
+    },
+    "ios": {
+      "supportsTablet": true,
+      "bundleIdentifier": "com.licitafacil",
+      "buildNumber": "1"
     }
   }
 }

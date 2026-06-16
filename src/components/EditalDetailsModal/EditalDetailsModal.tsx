@@ -16,6 +16,11 @@ import { useTheme } from '@/hooks/useTheme';
 import type { AppTheme } from '@/hooks/useTheme';
 import type { OpportunityDetail } from '@/types/opportunity';
 import { useOpportunities } from '@/hooks/useOpportunities';
+import {
+    formatDateTime,
+    getDeadlineLabel,
+    isOpportunityExpired,
+} from '@/utils/opportunityDeadline';
 
 interface EditalDetailsModalProps {
     visible: boolean;
@@ -201,6 +206,9 @@ export function EditalDetailsModal({
         currency: 'BRL',
     });
 
+    const expired = isOpportunityExpired(opportunity);
+    const deadlineLabel = getDeadlineLabel(opportunity);
+
     return (
         <Modal
             visible={visible}
@@ -271,10 +279,19 @@ export function EditalDetailsModal({
                             <Text style={styles.statValue}>{formattedValue}</Text>
                         </View>
                         <View style={styles.statBox}>
-                            <Text style={styles.statLabel}>ENCERRA EM</Text>
-                            <Text style={styles.statValue}>
-                                {opportunity.daysRemaining} dias
+                            <Text style={styles.statLabel}>
+                                {expired ? 'ENCERRADO EM' : 'ENCERRA EM'}
                             </Text>
+                            <Text style={styles.statValue}>
+                                {expired && opportunity.closingDate
+                                    ? formatDateTime(opportunity.closingDate)
+                                    : deadlineLabel}
+                            </Text>
+                            {!expired && opportunity.closingDate ? (
+                                <Text style={[styles.statLabel, { marginTop: 4, marginBottom: 0 }]}>
+                                    Até {formatDateTime(opportunity.closingDate)}
+                                </Text>
+                            ) : null}
                         </View>
                     </View>
 

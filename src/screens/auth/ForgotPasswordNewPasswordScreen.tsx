@@ -13,11 +13,11 @@ import { Feather } from '@expo/vector-icons';
 import { useRouter, type Href } from 'expo-router';
 
 import Button from '@/components/Button/Button';
+import { validatePassword } from '@/hooks/useSignup';
 import { usePasswordRecoveryStore } from '@/stores/auth/usePasswordRecoveryStore';
 import { authService } from '@/services/authService';
 import { tokens } from '@/theme';
-
-const MIN_PASSWORD_LENGTH = 6;
+import { getApiErrorMessage } from '@/utils/apiError';
 
 export default function ForgotPasswordNewPasswordScreen() {
   const router = useRouter();
@@ -28,7 +28,9 @@ export default function ForgotPasswordNewPasswordScreen() {
   const [confirmPassword, setConfirmPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  const [error, setError] = useState('');
+  const [passwordError, setPasswordError] = useState('');
+  const [confirmPasswordError, setConfirmPasswordError] = useState('');
+  const [submitError, setSubmitError] = useState('');
   const [isLoading, setIsLoading] = useState(false);
 
   useEffect(() => {
@@ -37,34 +39,48 @@ export default function ForgotPasswordNewPasswordScreen() {
     }
   }, [resetToken, router]);
 
+  const handlePasswordBlur = () => {
+    if (!password.trim()) return;
+
+    const errorMessage = validatePassword(password);
+    setPasswordError(errorMessage ?? '');
+  };
+
   const handleSubmit = async () => {
-    if (password.length < MIN_PASSWORD_LENGTH) {
-      setError(`A senha deve ter pelo menos ${MIN_PASSWORD_LENGTH} caracteres`);
+    const validationError = validatePassword(password);
+    if (validationError) {
+      setPasswordError(validationError);
+      setConfirmPasswordError('');
+      setSubmitError('');
       return;
     }
 
     if (password !== confirmPassword) {
-      setError('As senhas não coincidem');
+      setPasswordError('');
+      setConfirmPasswordError('As senhas não coincidem');
+      setSubmitError('');
       return;
     }
 
-    setError('');
+    setPasswordError('');
+    setConfirmPasswordError('');
+    setSubmitError('');
     setIsLoading(true);
 
     try {
       await authService.completePasswordReset(resetToken!, password);
-      
+
       clearRecovery();
       router.replace('/(auth)/login' as Href);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Não foi possível atualizar a senha. Tente novamente.');
+    } catch (err: unknown) {
+      setSubmitError(getApiErrorMessage(err, 'Não foi possível atualizar a senha. Tente novamente.'));
     } finally {
       setIsLoading(false);
     }
   };
 
   if (!resetToken) {
-    return null; 
+    return null;
   }
 
   return (
@@ -91,14 +107,18 @@ export default function ForgotPasswordNewPasswordScreen() {
           <Text style={styles.label}>Nova senha</Text>
           <View style={styles.passwordContainer}>
             <TextInput
-              style={[styles.input, styles.passwordInput]}
+              style={[
+                styles.input,
+                styles.passwordInput,
+                passwordError ? styles.inputError : null,
+              ]}
               value={password}
               onChangeText={(text) => {
                 setPassword(text);
-                if (error) {
-                  setError('');
-                }
+                if (passwordError) setPasswordError('');
+                if (submitError) setSubmitError('');
               }}
+              onBlur={handlePasswordBlur}
               placeholder="Digite sua nova senha"
               placeholderTextColor={tokens.colors.text.secondary}
               secureTextEntry={!showPassword}
@@ -117,19 +137,23 @@ export default function ForgotPasswordNewPasswordScreen() {
               />
             </TouchableOpacity>
           </View>
+          {passwordError ? <Text style={styles.errorText}>{passwordError}</Text> : null}
         </View>
 
         <View style={styles.fieldGroup}>
           <Text style={styles.label}>Confirmar senha</Text>
           <View style={styles.passwordContainer}>
             <TextInput
-              style={[styles.input, styles.passwordInput]}
+              style={[
+                styles.input,
+                styles.passwordInput,
+                confirmPasswordError ? styles.inputError : null,
+              ]}
               value={confirmPassword}
               onChangeText={(text) => {
                 setConfirmPassword(text);
-                if (error) {
-                  setError('');
-                }
+                if (confirmPasswordError) setConfirmPasswordError('');
+                if (submitError) setSubmitError('');
               }}
               placeholder="Confirme sua nova senha"
               placeholderTextColor={tokens.colors.text.secondary}
@@ -149,12 +173,15 @@ export default function ForgotPasswordNewPasswordScreen() {
               />
             </TouchableOpacity>
           </View>
+          {confirmPasswordError ? (
+            <Text style={styles.errorText}>{confirmPasswordError}</Text>
+          ) : null}
         </View>
 
-        {error ? <Text style={styles.errorText}>{error}</Text> : null}
+        {submitError ? <Text style={styles.errorText}>{submitError}</Text> : null}
 
         <Button
-          title={isLoading ? "Atualizando..." : "Atualizar senha"}
+          title={isLoading ? 'Atualizando...' : 'Atualizar senha'}
           onPress={handleSubmit}
           size="lg"
           style={styles.primaryButton}
@@ -210,6 +237,9 @@ const styles = StyleSheet.create({
     paddingHorizontal: tokens.spacing.lg,
     fontSize: tokens.typography.fontSize.bodyM,
     color: tokens.colors.text.primary,
+  },
+  inputError: {
+    borderColor: tokens.colors.error[500],
   },
   passwordContainer: {
     position: 'relative',
