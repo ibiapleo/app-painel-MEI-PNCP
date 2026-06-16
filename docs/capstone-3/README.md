@@ -1,7 +1,7 @@
 # Capstone 3 — MVP integrado
 
 - **Data de entrega:** 05/06/2026
-- **Status:** entregue
+- **Status:** Concluído
 
 ## Escopo
 

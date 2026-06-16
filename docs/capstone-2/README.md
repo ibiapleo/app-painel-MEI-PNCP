@@ -1,7 +1,7 @@
 # Capstone 2 — Consulta de editais e detalhe
 
 - **Data de entrega:** 22/05/2026
-- **Status:** em andamento
+- **Status:** Concluído
 
 ## Escopo
 
