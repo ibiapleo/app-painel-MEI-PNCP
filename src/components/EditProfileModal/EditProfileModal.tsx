@@ -8,7 +8,6 @@ import {
   TextInput,
   ScrollView,
   ActivityIndicator,
-  FlatList,
   Alert,
 } from 'react-native';
 import { Feather } from '@expo/vector-icons';
@@ -239,6 +238,9 @@ export default function EditProfileModal({
           color: theme.colors.text.primary,
           fontWeight: '500',
         },
+        stateTextSelected: {
+          color: tokens.colors.primary[500],
+        },
         selectedStatesTag: {
           flexDirection: 'row',
           flexWrap: 'wrap',
@@ -256,6 +258,7 @@ export default function EditProfileModal({
         stateTagText: {
           fontSize: 12,
           fontWeight: '500',
+          color: tokens.colors.primary[500],
         },
         buttonContainer: {
           flexDirection: 'row',
@@ -383,33 +386,40 @@ export default function EditProfileModal({
                       <ActivityIndicator color={tokens.colors.primary[500]} />
                     </View>
                   ) : (
-                    <View style={styles.statesList}>
-                      <FlatList
-                        data={filteredStates}
-                        keyExtractor={(item) => item.id}
-                        scrollEnabled={true}
-                        nestedScrollEnabled={true}
-                        renderItem={({ item }) => (
-                          <TouchableOpacity
-                            style={[
-                              styles.stateItem,
-                              selectedStates.includes(item.sigla) && styles.stateItemSelected,
-                            ]}
-                            onPress={() => toggleState(item.sigla)}
-                            disabled={isLoading}
-                          >
-                            <Text style={styles.stateText}>{item.nome}</Text>
-                            {selectedStates.includes(item.sigla) && (
-                              <Feather
-                                name="check"
-                                size={18}
-                                color={tokens.colors.primary[500]}
-                              />
-                            )}
-                          </TouchableOpacity>
-                        )}
-                      />
-                    </View>
+                      <ScrollView style={styles.statesList} nestedScrollEnabled>
+                        {filteredStates.map((item) => {
+                          const isSelected = selectedStates.includes(item.sigla);
+
+                          return (
+                              <TouchableOpacity
+                                  key={item.id}
+                                  style={[
+                                    styles.stateItem,
+                                    isSelected && styles.stateItemSelected,
+                                  ]}
+                                  onPress={() => toggleState(item.sigla)}
+                                  disabled={isLoading}
+                              >
+                                <Text
+                                    style={[
+                                      styles.stateText,
+                                      isSelected && styles.stateTextSelected,
+                                    ]}
+                                >
+                                  {item.nome}
+                                </Text>
+
+                                {isSelected && (
+                                    <Feather
+                                        name="check"
+                                        size={18}
+                                        color={tokens.colors.primary[500]}
+                                    />
+                                )}
+                              </TouchableOpacity>
+                          );
+                        })}
+                      </ScrollView>
                   )}
 
                   {selectedStates.length > 0 && (
