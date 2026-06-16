@@ -13,6 +13,7 @@ interface FavoriteCardProps {
     location: string;
     value: string;
     status: FavoriteStatus;
+    deadlineLines: string[];
     onPress?: () => void;
 }
 
@@ -27,10 +28,10 @@ function getPalette(theme: AppTheme, isActive: boolean) {
     }
 
     return {
-        bg: theme.colors.background.muted,
+        bg: theme.colors.border.default,
         textPrimary: theme.colors.text.primary,
         textSecondary: theme.colors.text.secondary,
-        divider: theme.colors.border.default,
+        divider: theme.colors.border.subtle,
     };
 }
 
@@ -40,10 +41,12 @@ function FavoriteCardImpl({
     location,
     value,
     status,
+    deadlineLines,
     onPress,
 }: FavoriteCardProps) {
     const theme = useTheme();
     const isActive = status === 'em_andamento';
+    const isMultiLine = deadlineLines.length > 1;
     const palette = getPalette(theme, isActive);
 
     const styles = useMemo(
@@ -81,7 +84,12 @@ function FavoriteCardImpl({
                 footer: {
                     flexDirection: 'row',
                     justifyContent: 'space-between',
-                    alignItems: 'center',
+                    alignItems: 'flex-end',
+                    gap: 8,
+                },
+                valueBlock: {
+                    flex: 1,
+                    minWidth: 0,
                 },
                 valueLabel: {
                     fontSize: 11,
@@ -94,14 +102,26 @@ function FavoriteCardImpl({
                 statusRow: {
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 6,
+                    gap: 4,
+                    flexShrink: 1,
+                    maxWidth: '46%',
+                },
+                statusTextBlock: {
+                    flexShrink: 1,
                 },
                 statusText: {
-                    fontSize: 13,
+                    fontSize: isMultiLine ? 11 : 12,
                     fontWeight: '500',
+                    textAlign: 'right',
+                    lineHeight: isMultiLine ? 14 : 18,
+                },
+                statusTextSub: {
+                    fontSize: 10,
+                    fontWeight: '400',
+                    marginTop: 1,
                 },
             }),
-        [],
+        [isMultiLine],
     );
 
     return (
@@ -134,18 +154,32 @@ function FavoriteCardImpl({
             <View style={[styles.divider, { backgroundColor: palette.divider }]} />
 
             <View style={styles.footer}>
-                <View>
+                <View style={styles.valueBlock}>
                     <Text style={[styles.valueLabel, { color: palette.textSecondary }]}>
                         VALOR ESTIMADO
                     </Text>
-                    <Text style={[styles.value, { color: palette.textPrimary }]}>{value}</Text>
+                    <Text style={[styles.value, { color: palette.textPrimary }]} numberOfLines={1}>
+                        {value}
+                    </Text>
                 </View>
 
                 <View style={styles.statusRow}>
-                    <Feather name="clock" size={14} color={palette.textSecondary} />
-                    <Text style={[styles.statusText, { color: palette.textSecondary }]}>
-                        {isActive ? 'Em andamento' : 'Encerrado'}
-                    </Text>
+                    <Feather name="clock" size={isMultiLine ? 12 : 14} color={palette.textSecondary} />
+                    <View style={styles.statusTextBlock}>
+                        {deadlineLines.map((line, index) => (
+                            <Text
+                                key={`${line}-${index}`}
+                                style={[
+                                    styles.statusText,
+                                    index > 0 && styles.statusTextSub,
+                                    { color: palette.textSecondary },
+                                ]}
+                                numberOfLines={1}
+                            >
+                                {line}
+                            </Text>
+                        ))}
+                    </View>
                 </View>
             </View>
         </Pressable>

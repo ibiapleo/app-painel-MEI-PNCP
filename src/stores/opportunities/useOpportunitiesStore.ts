@@ -11,6 +11,15 @@ import {
 } from '@/services/opportunitiesService';
 
 import type { OpportunitiesStore, FilterTab } from './types';
+import type { Opportunity } from '@/types/opportunity';
+import { sortOpportunitiesByDeadline } from '@/utils/opportunityDeadline';
+
+function sortItemsForTab(items: Opportunity[], tab: FilterTab): Opportunity[] {
+  if (tab === 'Pra você' || tab === 'Prazo') {
+    return sortOpportunitiesByDeadline(items);
+  }
+  return items;
+}
 
 export const useOpportunitiesStore = create<OpportunitiesStore>()((set, get) => ({
   opportunities: [],
@@ -23,7 +32,7 @@ export const useOpportunitiesStore = create<OpportunitiesStore>()((set, get) => 
     try {
       set({ isLoading: true, error: null });
       const data = await getRecommendedOpportunities();
-      set({ opportunities: data.items, isLoading: false });
+      set({ opportunities: sortItemsForTab(data.items, 'Pra você'), isLoading: false });
     } catch (error: any) {
       set({
         isLoading: false,
@@ -38,7 +47,7 @@ export const useOpportunitiesStore = create<OpportunitiesStore>()((set, get) => 
       
       if (!query.trim()) {
         const data = await getRecommendedOpportunities();
-        set({ opportunities: data.items, isLoading: false });
+        set({ opportunities: sortItemsForTab(data.items, 'Pra você'), isLoading: false });
         return;
       }
 
@@ -74,7 +83,7 @@ export const useOpportunitiesStore = create<OpportunitiesStore>()((set, get) => 
           data = await getRecommendedOpportunities();
           break;
       }
-      set({ opportunities: data.items, isLoading: false });
+      set({ opportunities: sortItemsForTab(data.items, tab), isLoading: false });
     } catch (error: any) {
       set({
         isLoading: false,

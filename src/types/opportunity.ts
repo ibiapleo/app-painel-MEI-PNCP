@@ -5,10 +5,11 @@ export interface Opportunity {
     location: string;
     description: string;
     estimatedValue: number;
+    closingDate: string;
     daysRemaining: number;
+    isExpired: boolean;
     compatibilityLabel: string;
     isFavorite: boolean;
-    closingDate?: string;
 }
 
 export interface OpportunityCategory {

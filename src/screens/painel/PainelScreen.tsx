@@ -1,6 +1,7 @@
 import { memo, useCallback, useMemo, useState } from 'react';
 import {
     ActivityIndicator,
+    Alert,
     Pressable,
     SectionList,
     StyleSheet,
@@ -11,14 +12,21 @@ import {
 import { Feather, Ionicons } from '@expo/vector-icons';
 import { useFocusEffect, useRouter } from 'expo-router';
 
+import { EditalDetailsModal } from '@/components/EditalDetailsModal/EditalDetailsModal';
 import { FavoriteCard } from '@/components/FavoriteCard/FavoriteCard';
 import { FavoritesCalendar, type MarkType } from '@/components/FavoritesCalendar/FavoritesCalendar';
 import { useFavorites } from '@/hooks/useFavorites';
 import { useNotifications } from '@/hooks/useNotifications';
 import { useTheme } from '@/hooks/useTheme';
 import type { AppTheme } from '@/hooks/useTheme';
-import type { Opportunity } from '@/types/opportunity';
+import { getOpportunityDetail } from '@/services/opportunitiesService';
+import type { Opportunity, OpportunityDetail } from '@/types/opportunity';
 import type { FavoritesTab } from '@/stores/favorites/types';
+import {
+    getClosingDate,
+    getCardDeadlineLines,
+    isOpportunityExpired,
+} from '@/utils/opportunityDeadline';
 
 const TABS: FavoritesTab[] = ['Em andamento', 'Encerrados'];
 
@@ -42,12 +50,6 @@ function formatCurrency(value: number): string {
 
 function startOfDay(d: Date): Date {
     return new Date(d.getFullYear(), d.getMonth(), d.getDate());
-}
-
-function addDays(base: Date, days: number): Date {
-    const d = new Date(base);
-    d.setDate(d.getDate() + days);
-    return d;
 }
 
 function toDayKey(d: Date): string {
@@ -290,8 +292,11 @@ const SectionHeader = memo(function SectionHeader({
 export default function PainelScreen() {
     const theme = useTheme();
     const styles = useMemo(() => createStyles(theme), [theme]);
-    const { favorites, isLoading, error, activeTab, setActiveTab, reload } = useFavorites();
+    const { favorites, isLoading, error, activeTab, setActiveTab, reload, toggleFavorite } = useFavorites();
     const { notificationCount } = useNotifications();
+
+    const [selectedDetail, setSelectedDetail] = useState<OpportunityDetail | null>(null);
+    const [isFetchingDetail, setIsFetchingDetail] = useState(false);
 
     useFocusEffect(
         useCallback(() => {
@@ -304,18 +309,19 @@ export default function PainelScreen() {
     });
     const [sortOrder, setSortOrder] = useState<SortOrder>('soonest');
 
-    const today = useMemo(() => startOfDay(new Date()), []);
     const displayedYear = displayedMonth.getFullYear();
     const displayedMonthIdx = displayedMonth.getMonth();
 
     const closingByOpp = useMemo(() => {
         const map = new Map<string, Date>();
         for (const opp of favorites) {
-            const days = Number(opp.daysRemaining ?? 0);
-            map.set(opp.id, startOfDay(addDays(today, days)));
+            const closing = getClosingDate(opp);
+            if (closing) {
+                map.set(opp.id, startOfDay(closing));
+            }
         }
         return map;
-    }, [favorites, today]);
+    }, [favorites]);
 
     const markedDates = useMemo(() => {
         const map = new Map<string, MarkType>();
@@ -324,7 +330,7 @@ export default function PainelScreen() {
             if (!d) continue;
             if (d.getFullYear() !== displayedYear || d.getMonth() !== displayedMonthIdx) continue;
             const key = toDayKey(d);
-            const mark: MarkType = d < today ? 'past' : 'future';
+            const mark: MarkType = isOpportunityExpired(opp) ? 'past' : 'future';
             const existing = map.get(key);
             if (existing === 'future' || mark === 'future') {
                 map.set(key, 'future');
@@ -333,7 +339,7 @@ export default function PainelScreen() {
             }
         }
         return map;
-    }, [favorites, closingByOpp, displayedYear, displayedMonthIdx, today]);
+    }, [favorites, closingByOpp, displayedYear, displayedMonthIdx]);
 
     const sections = useMemo(() => {
         const filtered = favorites.filter((opp) => {
@@ -342,7 +348,7 @@ export default function PainelScreen() {
             if (d.getFullYear() !== displayedYear || d.getMonth() !== displayedMonthIdx) {
                 return false;
             }
-            const isPast = d < today;
+            const isPast = isOpportunityExpired(opp);
             return activeTab === 'Em andamento' ? !isPast : isPast;
         });
 
@@ -362,7 +368,7 @@ export default function PainelScreen() {
                 return a[0] < b[0] ? 1 : -1;
             })
             .map(([key, data]) => ({ title: formatSectionTitle(key), data }));
-    }, [favorites, closingByOpp, displayedYear, displayedMonthIdx, today, activeTab, sortOrder]);
+    }, [favorites, closingByOpp, displayedYear, displayedMonthIdx, activeTab, sortOrder]);
 
     const handlePrevMonth = useCallback(
         () => setDisplayedMonth((m) => new Date(m.getFullYear(), m.getMonth() - 1, 1)),
@@ -379,6 +385,28 @@ export default function PainelScreen() {
     const handleChangeTab = useCallback(
         (tab: FavoritesTab) => setActiveTab(tab),
         [setActiveTab]
+    );
+
+    const handleOpenDetails = useCallback(async (id: string) => {
+        try {
+            setIsFetchingDetail(true);
+            const detail = await getOpportunityDetail(id);
+            setSelectedDetail(detail);
+        } catch (_error) {
+            Alert.alert('Erro', 'Não foi possível carregar os detalhes do edital.');
+        } finally {
+            setIsFetchingDetail(false);
+        }
+    }, []);
+
+    const handleToggleFavorite = useCallback(
+        async (id: string) => {
+            await toggleFavorite(id);
+            setSelectedDetail((prev) =>
+                prev?.id === id ? { ...prev, isFavorite: !prev.isFavorite } : prev
+            );
+        },
+        [toggleFavorite]
     );
 
     const listHeader = useMemo(
@@ -398,7 +426,7 @@ export default function PainelScreen() {
                     styles={styles}
                     primaryColor={theme.colors.primary.main}
                 />
-                {isLoading && (
+                {isLoading && !isFetchingDetail && (
                     <ActivityIndicator style={styles.feedback} size="large" color={theme.colors.primary.main} />
                 )}
                 {error ? <Text style={styles.error}>{error}</Text> : null}
@@ -421,6 +449,7 @@ export default function PainelScreen() {
             sortOrder,
             handleToggleSort,
             isLoading,
+            isFetchingDetail,
             error,
             sections.length,
             favorites.length,
@@ -436,10 +465,12 @@ export default function PainelScreen() {
                 company={item.company}
                 location={item.location}
                 value={formatCurrency(item.estimatedValue)}
-                status={activeTab === 'Em andamento' ? 'em_andamento' : 'encerrado'}
+                status={isOpportunityExpired(item) ? 'encerrado' : 'em_andamento'}
+                deadlineLines={getCardDeadlineLines(item)}
+                onPress={() => handleOpenDetails(item.id)}
             />
         ),
-        [activeTab]
+        [handleOpenDetails]
     );
 
     const renderSectionHeader = useCallback(
@@ -459,6 +490,10 @@ export default function PainelScreen() {
                 iconColor={theme.colors.text.primary}
             />
 
+            {isFetchingDetail && (
+                <ActivityIndicator style={styles.feedback} size="large" color={theme.colors.primary.main} />
+            )}
+
             <SectionList
                 sections={sections}
                 keyExtractor={keyExtractor}
@@ -467,6 +502,16 @@ export default function PainelScreen() {
                 ListHeaderComponent={listHeader}
                 renderSectionHeader={renderSectionHeader}
                 renderItem={renderItem}
+            />
+
+            <EditalDetailsModal
+                visible={!!selectedDetail}
+                opportunity={selectedDetail}
+                onClose={() => setSelectedDetail(null)}
+                onToggleFavorite={handleToggleFavorite}
+                onFollow={(id) => {
+                    console.log('Acompanhar edital:', id);
+                }}
             />
         </View>
     );
