@@ -1,10 +1,11 @@
 import { useMemo, useState } from "react";
-import { StyleSheet, Switch, Text, View } from 'react-native';
+import { StyleSheet, Switch, Text, View, Alert } from 'react-native';
 import { useRouter } from "expo-router";
 
 import SettingsMenuButton from "@/components/SettingsMenuButton/SettingsMenuButton";
 import LogOutModal from "@/components/LogOutModal/LogOutModal";
 import PrivacyPolicyModal from "@/components/PrivacyPolicyModal/PrivacyPolicyModal";
+import EditProfileModal from "@/components/EditProfileModal/EditProfileModal";
 
 import { useTheme } from '@/hooks/useTheme';
 import { useAuthStore } from '@/stores/auth/useAuthStore';
@@ -15,9 +16,12 @@ export default function SettingsScreen() {
   const theme = useTheme();
   const [modalVisible, setModalVisible] = useState(false);
   const [privacyModalVisible, setPrivacyModalVisible] = useState(false);
+  const [editProfileModalVisible, setEditProfileModalVisible] = useState(false);
   const [appearanceExpanded, setAppearanceExpanded] = useState(false);
   const logout = useAuthStore((state) => state.logout);
   const user = useAuthStore((state) => state.user);
+  const updateProfile = useAuthStore((state) => state.updateProfile);
+  const isLoading = useAuthStore((state) => state.isLoading);
   const themeMode = useThemeStore((state) => state.mode);
   const toggleMode = useThemeStore((state) => state.toggleMode);
 
@@ -86,6 +90,33 @@ export default function SettingsScreen() {
     await logout();
   };
 
+  const handleSaveProfile = async (data: {
+    name: string;
+    cnpj: string;
+    interested_state_siglas: string[];
+  }) => {
+    try {
+      await updateProfile(data);
+      Alert.alert('Sucesso', 'Perfil atualizado com sucesso!');
+    } catch (error) {
+      Alert.alert(
+        'Erro',
+        'Não foi possível atualizar o perfil. Tente novamente.'
+      );
+      console.error('Erro ao atualizar perfil:', error);
+    }
+  };
+
+  const getInterestedStatesSiglas = () => {
+    if (user?.interested_state_siglas && Array.isArray(user.interested_state_siglas)) {
+      return user.interested_state_siglas;
+    }
+    if (user?.interested_states && Array.isArray(user.interested_states)) {
+      return user.interested_states.map((state) => state.sigla);
+    }
+    return [];
+  };
+
   return (
     <View style={styles.container}>
       <View style={styles.header}>
@@ -100,6 +131,12 @@ export default function SettingsScreen() {
       </View>
 
       <View style={styles.menuContainer}>
+        <SettingsMenuButton
+          title="Editar Perfil"
+          onPress={() => setEditProfileModalVisible(true)}
+        />
+        <View style={styles.line} />
+
         <SettingsMenuButton
           title="Notificações"
           onPress={() => router.push('/notifications')}
@@ -147,6 +184,18 @@ export default function SettingsScreen() {
         <PrivacyPolicyModal
           visible={privacyModalVisible}
           onClose={() => setPrivacyModalVisible(false)}
+        />
+
+        <EditProfileModal
+          visible={editProfileModalVisible}
+          onClose={() => setEditProfileModalVisible(false)}
+          onSave={handleSaveProfile}
+          initialData={{
+            name: user?.name,
+            cnpj: user?.cnpj || '',
+            interested_state_siglas: getInterestedStatesSiglas(),
+          }}
+          isLoading={isLoading}
         />
       </View>
     </View>

@@ -50,6 +50,37 @@ export const useAuthStore = create<AuthStore>()(
         }
       },
 
+      updateProfile: async (data) => {
+        set({ isLoading: true });
+        try {
+          const updateData: {
+            name?: string;
+            cnpj?: string;
+            interested_state_siglas?: string[];
+          } = {};
+
+          if (data.name) {
+            updateData.name = data.name;
+          }
+
+          if (data.interested_state_siglas) {
+            updateData.interested_state_siglas = data.interested_state_siglas;
+          }
+
+          if (updateData.name || updateData.interested_state_siglas) {
+            await authService.updateProfile(updateData);
+          }
+
+          if (data.cnpj) {
+            await authService.updateCnpj(data.cnpj);
+          }
+
+          await get().fetchUserProfile();
+        } finally {
+          set({ isLoading: false });
+        }
+      },
+
       setHasHydrated: (value: boolean) => {
         set({ _hasHydrated: value });
       },

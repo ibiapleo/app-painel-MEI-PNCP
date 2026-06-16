@@ -11,6 +11,8 @@ export interface AuthUser {
     id: string;
     description: string;
   }[];
+  interested_state_siglas?: string[];
+  interested_states?: Array<{ sigla: string }>;
 }
 
 export interface AuthState {
@@ -24,6 +26,11 @@ export interface AuthActions {
   login: (email: string, password: string) => Promise<void>;
   fetchUserProfile: () => Promise<void>;
   logout: () => Promise<void>;
+  updateProfile: (data: {
+    name?: string;
+    cnpj?: string;
+    interested_state_siglas?: string[];
+  }) => Promise<void>;
   setHasHydrated: (value: boolean) => void;
 }
 
