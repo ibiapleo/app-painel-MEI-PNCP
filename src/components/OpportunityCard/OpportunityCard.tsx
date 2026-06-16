@@ -3,6 +3,7 @@ import { Pressable, View, Text, StyleSheet } from 'react-native';
 import { Ionicons, Feather } from '@expo/vector-icons';
 import { CompatibilityBadge } from '@/components/CompatibilityBadge/CompatibilityBadge';
 import { useTheme } from '@/hooks/useTheme';
+import type { DeadlineUrgency } from '@/utils/opportunityDeadline';
 
 interface OpportunityCardProps {
     title: string;
@@ -10,11 +11,28 @@ interface OpportunityCardProps {
     location: string;
     description: string;
     value: string;
-    daysRemaining: string;
+    deadlineLines: string[];
+    deadlineUrgency: DeadlineUrgency;
     isFavorite: boolean;
     compatibilityLabel: string;
     onToggleFavorite: () => void;
     onPress?: () => void;
+}
+
+function getDeadlineColor(
+    urgency: DeadlineUrgency,
+    theme: ReturnType<typeof useTheme>,
+): string {
+    switch (urgency) {
+        case 'expired':
+            return theme.colors.text.secondary;
+        case 'today':
+            return theme.error[500];
+        case 'urgent':
+            return theme.warning[500];
+        default:
+            return theme.colors.text.secondary;
+    }
 }
 
 export function OpportunityCard({
@@ -23,13 +41,17 @@ export function OpportunityCard({
     location,
     description,
     value,
-    daysRemaining,
+    deadlineLines,
+    deadlineUrgency,
     isFavorite,
     compatibilityLabel,
     onToggleFavorite,
     onPress,
 }: OpportunityCardProps) {
     const theme = useTheme();
+    const isExpired = deadlineUrgency === 'expired';
+    const isMultiLine = deadlineLines.length > 1;
+    const deadlineColor = getDeadlineColor(deadlineUrgency, theme);
 
     const styles = useMemo(
         () =>
@@ -39,6 +61,7 @@ export function OpportunityCard({
                     borderRadius: 18,
                     padding: 16,
                     marginBottom: 16,
+                    opacity: isExpired ? 0.75 : 1,
                 },
                 cardPressed: {
                     opacity: 0.85,
@@ -81,7 +104,12 @@ export function OpportunityCard({
                 footer: {
                     flexDirection: 'row',
                     justifyContent: 'space-between',
-                    alignItems: 'center',
+                    alignItems: 'flex-end',
+                    gap: 8,
+                },
+                valueBlock: {
+                    flex: 1,
+                    minWidth: 0,
                 },
                 valueLabel: {
                     color: theme.colors.text.secondary,
@@ -96,14 +124,27 @@ export function OpportunityCard({
                 deadline: {
                     flexDirection: 'row',
                     alignItems: 'center',
-                    gap: 5,
+                    gap: 4,
+                    flexShrink: 1,
+                    maxWidth: '46%',
+                },
+                deadlineTextBlock: {
+                    flexShrink: 1,
                 },
                 days: {
-                    color: theme.colors.text.secondary,
-                    fontSize: 14,
+                    color: deadlineColor,
+                    fontSize: isMultiLine ? 11 : 12,
+                    fontWeight: deadlineUrgency === 'today' ? '700' : '500',
+                    textAlign: 'right',
+                    lineHeight: isMultiLine ? 14 : 18,
+                },
+                daysSub: {
+                    fontSize: 10,
+                    fontWeight: '400',
+                    marginTop: 1,
                 },
             }),
-        [theme],
+        [theme, isExpired, isMultiLine, deadlineColor, deadlineUrgency],
     );
 
     return (
@@ -144,14 +185,24 @@ export function OpportunityCard({
             <View style={styles.divider} />
 
             <View style={styles.footer}>
-                <View>
+                <View style={styles.valueBlock}>
                     <Text style={styles.valueLabel}>VALOR ESTIMADO</Text>
-                    <Text style={styles.value}>{value}</Text>
+                    <Text style={styles.value} numberOfLines={1}>{value}</Text>
                 </View>
 
                 <View style={styles.deadline}>
-                    <Feather name="clock" size={16} color={theme.colors.text.secondary} />
-                    <Text style={styles.days}>{daysRemaining}</Text>
+                    <Feather name="clock" size={isMultiLine ? 12 : 14} color={deadlineColor} />
+                    <View style={styles.deadlineTextBlock}>
+                        {deadlineLines.map((line, index) => (
+                            <Text
+                                key={`${line}-${index}`}
+                                style={[styles.days, index > 0 && styles.daysSub]}
+                                numberOfLines={1}
+                            >
+                                {line}
+                            </Text>
+                        ))}
+                    </View>
                 </View>
             </View>
         </Pressable>
