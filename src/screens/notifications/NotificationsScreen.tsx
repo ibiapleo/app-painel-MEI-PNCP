@@ -13,7 +13,8 @@ import { useRouter } from 'expo-router';
 
 import { useTheme } from '@/hooks/useTheme';
 import { useThemeStore } from '@/stores/theme/useThemeStore';
-import NotificationCard from "@/components/NotificationCard/NotificationCard";
+import NotificationCard, { type Notification } from "@/components/NotificationCard/NotificationCard";
+import NotificationDetailModal from "@/components/NotificationDetailModal/NotificationDetailModal";
 import { useNotificationStore } from "@/stores/notifications/useNotificationsStore";
 
 export default function NotificationsScreen() {
@@ -21,8 +22,27 @@ export default function NotificationsScreen() {
   const theme = useTheme();
   const mode = useThemeStore((state) => state.mode);
   const [activeTab, setActiveTab] = useState<'unread' | 'read'>('unread');
+  const [selectedNotification, setSelectedNotification] = useState<Notification | null>(null);
 
   const { notifications, markAsRead } = useNotificationStore();
+
+  const formatNotificationDate = (date: string) =>
+    new Date(date).toLocaleDateString('pt-BR', {
+      day: '2-digit',
+      month: '2-digit',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+
+  const toCardNotification = (notification: (typeof notifications)[number]): Notification => ({
+    id: notification.id,
+    title: notification.title,
+    description: notification.message,
+    date: formatNotificationDate(notification.date),
+    isRead: notification.isRead,
+    type: 'info',
+  });
 
   const styles = useMemo(
     () =>
@@ -148,10 +168,15 @@ export default function NotificationsScreen() {
     return activeTab === 'unread' ? unreadNotifications : readNotifications;
   };
 
-  const handleNotificationPress = (notification: any) => {
-    if (!notification.isRead) {
-      markAsRead(notification.id);
+  const handleNotificationPress = (notification: Notification) => {
+    setSelectedNotification(notification);
+  };
+
+  const handleCloseNotificationModal = () => {
+    if (selectedNotification && !selectedNotification.isRead) {
+      markAsRead(selectedNotification.id);
     }
+    setSelectedNotification(null);
   };
 
   const renderEmptyState = () => (
@@ -233,26 +258,19 @@ export default function NotificationsScreen() {
             {currentNotifications.map((notification) => (
               <NotificationCard
                 key={notification.id}
-                notification={{
-                  id: notification.id,
-                  title: notification.title,
-                  description: notification.message,
-                  date: new Date(notification.date).toLocaleDateString('pt-BR', {
-                    day: '2-digit',
-                    month: '2-digit',
-                    year: 'numeric',
-                    hour: '2-digit',
-                    minute: '2-digit'
-                  }),
-                  isRead: notification.isRead,
-                  type: 'info' // ou mapear baseado no tipo da notificação
-                }}
+                notification={toCardNotification(notification)}
                 onPress={handleNotificationPress}
               />
             ))}
           </View>
         )}
       </ScrollView>
+
+      <NotificationDetailModal
+        visible={!!selectedNotification}
+        notification={selectedNotification}
+        onClose={handleCloseNotificationModal}
+      />
     </SafeAreaView>
   );
 }
