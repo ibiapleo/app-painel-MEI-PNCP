@@ -28,6 +28,13 @@
       "supportsTablet": true,
       "bundleIdentifier": "com.licitafacil",
       "buildNumber": "1"
-    }
+    },
+    "extra": {
+      "router": {},
+      "eas": {
+        "projectId": "aa4262ef-91f4-4d4e-895a-070636a23f0b"
+      }
+    },
+    "owner": "ljoi2"
   }
 }
