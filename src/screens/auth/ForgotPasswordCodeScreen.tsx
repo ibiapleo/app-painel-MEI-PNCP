@@ -18,6 +18,7 @@ import Button from '@/components/Button/Button';
 import { usePasswordRecoveryStore } from '@/stores/auth/usePasswordRecoveryStore';
 import { authService } from '@/services/authService';
 import { tokens } from '@/theme';
+import { getApiErrorMessage } from '@/utils/apiError';
 
 const CODE_LENGTH = 4;
 
@@ -95,12 +96,12 @@ export default function ForgotPasswordCodeScreen() {
 
     try {
       const data = await authService.verifyResetCode(displayEmail, code);
-      
-      setVerifiedCode(displayEmail, data.reset_token);
+
+      setVerifiedCode(displayEmail, data.resetToken ?? data.reset_token);
       
       router.push('/(auth)/forgot-password/new-password' as Href);
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Código inválido ou expirado.');
+    } catch (err: unknown) {
+      setError(getApiErrorMessage(err, 'Código inválido ou expirado.'));
     } finally {
       setIsLoading(false);
     }
