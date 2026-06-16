@@ -1,58 +1,113 @@
-# app-painel-MEI-PNCP
+# LicitaFácil
 
-Aplicativo mobile para **Microempreendedores Individuais (MEI)** consultar oportunidades de contratação pública disponíveis no **Portal Nacional de Contratações Públicas (PNCP)**.
+Aplicativo mobile para **Microempreendedores Individuais (MEI)** consultarem oportunidades de contratação pública integradas ao **Portal Nacional de Contratações Públicas (PNCP)**.
 
-Desenvolvido com [React Native](https://reactnative.dev/) e [Expo Go](https://expo.dev/go).
+O app oferece onboarding, autenticação, cadastro, exploração de editais com filtros, painel de favoritos, notificações e configurações (tema claro/escuro, termos e política de privacidade).
+
+Desenvolvido com [React Native](https://reactnative.dev/), [Expo](https://expo.dev/) (SDK 54) e [Expo Router](https://docs.expo.dev/router/introduction/).
 
 ---
 
 ## Pré-requisitos
 
-- [Node.js](https://nodejs.org/) 18 ou superior
-- [Expo CLI](https://docs.expo.dev/get-started/installation/)
-- Aplicativo **Expo Go** instalado no celular ([Android](https://play.google.com/store/apps/details?id=host.exp.exponent) / [iOS](https://apps.apple.com/app/expo-go/id982107779))
+- [Node.js](https://nodejs.org/) **18+** (recomendado: LTS)
+- [npm](https://www.npmjs.com/) ou outro gerenciador compatível
+- Para testar em dispositivo físico: app **Expo Go** com **SDK 54**
+  - [Android](https://expo.dev/go?sdkVersion=54&platform=android&device=true)
+  - [iOS](https://apps.apple.com/app/expo-go/id982107779)
 
-## Instalação
+
+
+---
+
+## Rodar localmente
+
+### 1. Clonar o repositório
+
+```bash
+git clone https://github.com/ibiapleo/app-painel-MEI-PNCP.git
+cd app-painel-MEI-PNCP
+```
+
+### 2. Instalar dependências
 
 ```bash
 npm install
 ```
 
-## Executar
+### 3. Configurar variáveis de ambiente
 
-```bash
-npx expo start
+Crie um arquivo `.env` na raiz do projeto:
+
+```env
+EXPO_PUBLIC_API_URL=https://licitafacil.brazilsouth.cloudapp.azure.com/api/v1
 ```
 
-Escaneie o QR Code com o aplicativo Expo Go para abrir o app no celular.
+### 4. Iniciar o servidor de desenvolvimento
 
-## Estrutura do Projeto
+```bash
+npx expo start --lan --go
+```
+Escaneie o QR Code com o aplicativo Expo Go (Android) ou com a Câmera do celular (iOS) para abrir o 
+app no celular.
+Comandos úteis:
+
+| Comando | Descrição |
+|---|---|
+| `npx expo start --go` | Força o uso do **Expo Go** |
+| `npx expo start --lan` | Usa o IP da rede local (recomendado no Android) |
+| `npx expo start --tunnel` | Túnel via internet (quando LAN não funciona) |
+| `npx expo start -c` | Limpa o cache |
+
+
+**Android:** se aparecer erro de conexão, verifique se a porta **8081** está liberada no firewall do computador e se o Expo Go está na versão do **SDK 54**.
+
+### 6. Lint e TypeScript
+
+```bash
+npm run lint
+npx tsc --noEmit
+```
+
+---
+
+## Estrutura do projeto
 
 ```
 app-painel-MEI-PNCP/
-├── app/                          # Rotas (Expo Router) — permanece na raiz
-│   ├── _layout.tsx               # Layout raiz
-│   ├── index.tsx                 # Entry / redirecionamento inicial
-│   ├── +not-found.tsx            # Tela 404
-│   ├── (onboarding)/             # Stack de onboarding
-│   ├── (signup)/                 # Stack de cadastro (steps 1–3 + success)
-│   └── (tabs)/                   # Navegação por abas (home, buscar)
-├── src/                          # Código-fonte da aplicação
-│   ├── assets/                   # SVGs, imagens, fontes
-│   ├── components/               # Componentes reutilizáveis (Button, OpportunityCard, etc.)
-│   ├── hooks/                    # Hooks customizados (useOpportunities, useSignup, ...)
-│   ├── screens/                  # Telas (home, onboarding, signup)
-│   ├── services/                 # Integrações externas (PNCP, IBGE)
-│   ├── stores/                   # Zustand (auth, signup, opportunities, notifications)
-│   ├── theme/                    # Tokens de design e estilos globais
-│   └── types/                    # Tipagens compartilhadas
-├── docs/                         # Documentação por Capstone
-│   ├── capstone-1/               # Protótipo navegável + identidade visual (08/05/2026)
-│   ├── capstone-2/               # Consulta de editais e detalhe (22/05/2026)
-│   ├── capstone-3/               # MVP integrado (05/06/2026)
-│   ├── capstone-4/               # Versão candidata + validação
-│   └── entrega-final/            # App demonstrável + apresentação
-├── app.json                      # Configuração do Expo
+├── app/                              # Rotas (Expo Router)
+│   ├── _layout.tsx                   # Layout raiz + providers
+│   ├── index.tsx                     # Entry / redirecionamento inicial
+│   ├── (onboarding)/                 # Fluxo de onboarding
+│   ├── (auth)/                       # Login e recuperação de senha
+│   │   ├── login.tsx
+│   │   └── forgot-password/          # E-mail, código e nova senha
+│   ├── (signup)/                     # Cadastro (steps 1–3 + sucesso)
+│   ├── (tabs)/                       # Abas autenticadas
+│   │   ├── index.tsx                 # Explore (home / editais)
+│   │   ├── painel.tsx                # Painel de favoritos
+│   │   └── settings.tsx              # Perfil e configurações
+│   └── (notifications)/              # Central de notificações
+├── src/
+│   ├── assets/                       # SVGs e ilustrações
+│   ├── components/                   # Componentes reutilizáveis
+│   ├── hooks/                        # Hooks customizados
+│   ├── screens/                      # Telas por domínio
+│   │   ├── auth/
+│   │   ├── home/
+│   │   ├── notifications/
+│   │   ├── onboarding/
+│   │   ├── painel/
+│   │   ├── settings/
+│   │   └── signup/
+│   ├── services/                     # API, auth e oportunidades
+│   ├── stores/                       # Estado global (Zustand)
+│   ├── theme/                        # Tokens, temas claro/escuro
+│   ├── types/                        # Tipagens compartilhadas
+│   └── utils/                        # Funções utilitárias
+├── docs/                             # Documentação por Capstone
+├── use-cases/                        # Cenários BDD (.feature)
+├── app.json                          # Configuração do Expo
 ├── babel.config.js
 ├── metro.config.js
 ├── eslint.config.js
@@ -60,17 +115,34 @@ app-painel-MEI-PNCP/
 └── tsconfig.json
 ```
 
-> **Alias de imports:** o alias `@/*` aponta para `./src/*`. Ou seja, `import Button from '@/components/Button/Button'` resolve para `src/components/Button/Button`.
+---
+
+## Funcionalidades principais
+
+- Onboarding inicial no app
+- Login, cadastro e recuperação de senha
+- Listagem e filtros de oportunidades (editais)
+- Detalhe do edital, compatibilidade e favoritos
+- Painel com calendário de favoritos
+- Notificações automáticas (mock/timer local)
+- Tema claro e escuro
+- Termos de uso e política de privacidade
+
+---
 
 ## Documentação
 
-A documentação do projeto está em [`docs/`](./docs), organizada pelos Capstones do Projeto Integrador:
+Documentação detalhada em [`docs/`](./docs):
 
-- [Capstone 1 — Protótipo e identidade visual (08/05/2026)](./docs/capstone-1)
-- [Capstone 2 — Consulta de editais e detalhe (22/05/2026)](./docs/capstone-2)
-- [Capstone 3 — MVP integrado (05/06/2026)](./docs/capstone-3)
+- [Capstone 1 — Protótipo e identidade visual](./docs/capstone-1)
+- [Capstone 2 — Consulta de editais e detalhe](./docs/capstone-2)
+- [Capstone 3 — MVP integrado](./docs/capstone-3)
 - [Capstone 4 — Versão candidata e validação](./docs/capstone-4)
-- [Entrega Final](./docs/entrega-final)
+- [Entrega final](./docs/entrega-final)
+
+Contratos de API do backend estão em `docs/capstone-2/`.
+
+---
 
 ## Tecnologias
 
@@ -81,10 +153,19 @@ A documentação do projeto está em [`docs/`](./docs), organizada pelos Capston
 | Expo Router | ~6.0.23 |
 | React | 19.1.0 |
 | TypeScript | ^5.3.3 |
+| Zustand | ^5.0.13 |
+| Axios | ^1.16.1 |
 
-## API
+---
 
-O app integra com a [API pública do PNCP](https://www.pncp.gov.br/api/pncp/swagger-ui/index.html) para buscar contratações abertas, e com a [API de localidades do IBGE](https://servicodados.ibge.gov.br/api/docs/localidades) para preenchimento de estados e municípios no cadastro.
+## Integrações
+
+| Serviço | Uso |
+|---|---|
+| API backend (`EXPO_PUBLIC_API_URL`) | Autenticação, cadastro, editais e notificações |
+
+
+---
 
 ## Licença
 

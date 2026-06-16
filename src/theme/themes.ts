@@ -12,6 +12,7 @@ const shared = {
 
 export const lightTheme = {
   ...shared,
+  isDark: false,
   colors: {
     background: {
       screen: '#F5F6FA',
@@ -45,6 +46,7 @@ export const lightTheme = {
 
 export const darkTheme = {
   ...shared,
+  isDark: true,
   colors: {
     background: {
       screen: '#121318',
