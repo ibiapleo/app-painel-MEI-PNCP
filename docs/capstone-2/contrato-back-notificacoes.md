@@ -1,15 +1,30 @@
 # Contrato do back-end — Notificações (badge e alertas)
 
-> **Status:** rascunho — **Capstone 3** (preparação). Hoje o app exibe contador fixo **9** via `useNotificationsStore` / `useNotifications` (`SearchHeader`). Sem integração de rede.
+> **Status:** Concluído. <br> **Capstone 3**. Auth, editais, cadastro e recuperação de senha já usam o back; notificações ainda vêm de `useNotificationStore` (`src/stores/notifications/useNotificationsStore.ts`) sem chamadas HTTP, pois precisariamos de uma mensageria do back-end (requisito que não foi previsto para essa parte do projeto.)
 
-## Escopo previsto
+## Escopo atual vs previsto
 
-- Contador de não lidas no header da Home.
-- Futuro: lista de notificações, preferências, push (fora do escopo imediato deste contrato).
+| Recurso | Hoje | Previsto (back) |
+|---------|------|-----------------|
+| Badge no header (`SearchHeader`) | contador da store mock | `GET /notifications/unread-count` |
+| Lista (`NotificationsScreen`) | array mock | `GET /notifications` |
+| Marcar como lida | local | `PATCH /notifications/:id/read` |
 
-## Tipos compartilhados
+## Tipos no app
 
-### `NotificationSummary` (proposta)
+```ts
+interface Notification {
+  id: string;
+  title: string;
+  message: string;
+  date: string;      // ISO 8601
+  isRead: boolean;
+}
+```
+
+## Contrato
+
+### `NotificationSummary`
 
 ```ts
 export interface NotificationSummary {
@@ -17,7 +32,7 @@ export interface NotificationSummary {
 }
 ```
 
-### `NotificationItem` (proposta — lista Capstone 3)
+### `NotificationItem` (lista)
 
 ```ts
 export interface NotificationItem {
@@ -25,40 +40,35 @@ export interface NotificationItem {
   title: string;
   body: string;
   read: boolean;
-  createdAt: string;       // ISO 8601
+  createdAt: string;
   type: 'prazo_edital' | 'novo_edital' | 'sistema';
   relatedOpportunityId?: string;
 }
 ```
 
-## Endpoints
+## Endpoints (a implementar)
 
 ### 1. Contador de não lidas
 
-Substitui `fetchCount()` mock.
-
 ```http
 GET /notifications/unread-count
-Authorization: Bearer <accessToken>
+Authorization: Bearer <access_token>
 ```
 
 **200 OK**
 ```json
 {
-  "unreadCount": 9
+  "unreadCount": 3
 }
 ```
 
 ---
 
-### 2. Listar notificações (Capstone 3)
+### 2. Listar notificações
 
 ```http
-GET /notifications
-  ?page=<n>
-  &pageSize=<n>
-  &unreadOnly=<boolean>
-Authorization: Bearer <accessToken>
+GET /notifications?page=1&pageSize=20&unreadOnly=false
+Authorization: Bearer <access_token>
 ```
 
 **200 OK**
@@ -73,11 +83,11 @@ Authorization: Bearer <accessToken>
 
 ---
 
-### 3. Marcar como lida (Capstone 3)
+### 3. Marcar como lida
 
 ```http
 PATCH /notifications/:id/read
-Authorization: Bearer <accessToken>
+Authorization: Bearer <access_token>
 ```
 
 **204 No Content**
@@ -88,20 +98,21 @@ Authorization: Bearer <accessToken>
 
 ```http
 POST /notifications/read-all
-Authorization: Bearer <accessToken>
+Authorization: Bearer <access_token>
 ```
 
 **204 No Content**
 
-## Erros padronizados
+## Erros
 
-Mesmo envelope dos demais contratos (`UNAUTHORIZED`, `INTERNAL_ERROR`, etc.).
+Mesmo padrão FastAPI (`detail`) dos demais contratos integrados.
 
-## Como o front consome hoje (mock)
+## Como o front consome hoje
 
 | Comportamento | Arquivo | Endpoint equivalente |
 |---|---|---|
-| Badge no header | `SearchHeader` + `useNotifications` | `GET /notifications/unread-count` |
+| Badge no header | `useNotifications` → `SearchHeader` | _(mock)_ → `GET /notifications/unread-count` |
+| Lista e detalhe | `NotificationsScreen` | _(mock)_ → `GET /notifications` |
 
 ## Documentos relacionados
 

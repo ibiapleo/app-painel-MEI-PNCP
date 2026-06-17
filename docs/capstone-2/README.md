@@ -5,7 +5,7 @@
 
 ## Escopo
 
-> Fluxo de consulta de editais e detalhe funcionando no app.
+> Fluxo de consulta de editais e detalhe funcionando no app, com autenticação, cadastro e recuperação de senha integrados ao back-end.
 
 ## O que já entregamos
 
@@ -18,49 +18,89 @@
 
 **Home (consulta de editais)**
 
-- `src/screens/home/HomeScreen.tsx` — `SearchHeader`, `FilterTabs`, `OpportunityCard`, hook `useOpportunities` (store `useOpportunitiesStore`, mock).
+- `src/screens/home/HomeScreen.tsx` — `SearchHeader`, `FilterTabs`, `OpportunityCard`, hook `useOpportunities`.
 - Rota: `app/(tabs)/index.tsx` (aba “Explore”).
-- Dados mock: `src/services/opportunitiesService.ts`.
+- Dados via API: `src/services/opportunitiesService.ts` → `useOpportunitiesStore`.
 - Tipos: `src/types/opportunity.ts`.
 
 **Estado global — KAN-15**
 
-- Remoção de `src/services/localAuth.ts`; persistência via Zustand + `persist` (AsyncStorage só como backend).
-- `useAuthStore` — sessão mock, `mockPassword`, login/logout, `updatePassword`, hidratação e expiração de sessão (7 dias).
-- `useSignupStore` — cadastro concluído + rascunho dos 3 steps (`@licitafacil/signup`).
+- Cliente HTTP: `src/services/api.ts` (Axios + interceptor de Bearer token e refresh em `401`).
+- Tokens no **Expo SecureStore** (`access_token`, `refresh_token`); perfil em AsyncStorage via `useAuthStore` (persist parcial).
+- `useAuthStore` — login/logout/perfil via `authService`; reidratação chama `GET /users/me`.
+- `useSignupStore` — rascunho local dos 3 steps; submit final via `POST /users/register` (login automático).
 - `useAppEntry` + `app/index.tsx` — roteamento inicial: onboarding → login → tabs.
-- Onboarding **sem** persistência (exibido apenas enquanto `isRegistrationComplete === false`).
-- `useOpportunitiesStore` e `useNotificationsStore` — em memória, preparadas para API.
-- `usePasswordRecoveryStore` — estado em memória do fluxo esqueci senha (entre telas).
-- **`__DEV__`:** em `app/_layout.tsx`, `resetAuthStateForDevReload()` + `skipHydration` na auth — a cada reload no Expo Go a sessão é zerada para facilitar testes de login, mas o cadastro (`signup`) permanece salvo. Em produção isso não executa.
+- Onboarding **sem** persistência de campos (apenas flag `isRegistrationComplete` salva).
+- `useOpportunitiesStore` e `useFavoritesStore` — editais e favoritos via back-end.
+- `usePasswordRecoveryStore` — estado em memória do fluxo esqueci senha (`resetToken` após verify).
+- `useNotificationStore` — **mock local** (integração prevista Capstone 3).
+- **`__DEV__`:** em `app/_layout.tsx`, `resetAuthStateForDevReload()` + `skipHydration` na auth — a cada reload no Expo Go a sessão em memória é zerada para facilitar testes de login; tokens no SecureStore permanecem. Em produção isso não executa.
 
-**Autenticação (lógica e rotas — UI com tasks próprias abaixo)**
+**Autenticação**
 
-- Login mock: `src/screens/auth/LoginScreen.tsx`, rota `app/(auth)/login`.
-- Esqueci senha (3 passos, mock código `0000`): e-mail → código → nova senha → redirect para login.
+- Login: `src/screens/auth/LoginScreen.tsx` → `POST /auth/login` + `GET /users/me`.
+- Esqueci senha (3 passos integrados): e-mail → código → nova senha → redirect para login.
   - `ForgotPasswordEmailScreen`, `ForgotPasswordCodeScreen`, `ForgotPasswordNewPasswordScreen`
   - Rotas: `app/(auth)/forgot-password/` (`index`, `code`, `new-password`)
+
+**Cadastro MEI (3 passos)**
+
+- UFs: `GET /locations/states` | CNAEs: `GET /cnpj/cnaes` | Registro: `POST /users/register`.
+- Hook: `src/hooks/useSignup.ts` | Store: `useSignupStore`.
+
+## Integração com back-end
+
+Base URL configurada em `.env`:
+
+```env
+EXPO_PUBLIC_API_URL=https://licitafacil.brazilsouth.cloudapp.azure.com/api/v1
+```
+
+Camada de serviços: `src/services/api.ts`, `authService.ts`, `opportunitiesService.ts`.
+
+| Domínio | Status | Serviço / store | Contrato |
+|---------|--------|-----------------|----------|
+| Login, sessão, perfil | Integrado | `authService`, `useAuthStore` | [contrato-back-auth.md](./contrato-back-auth.md) |
+| Cadastro MEI | Integrado | `authService`, `useSignup` | [contrato-back-cadastro.md](./contrato-back-cadastro.md) |
+| Recuperação de senha | Integrado | `authService`, telas forgot-password | [contrato-back-recuperacao-senha.md](./contrato-back-recuperacao-senha.md) |
+| Editais e favoritos | Integrado | `opportunitiesService`, stores Home/Painel | [contrato-back-editais.md](./contrato-back-editais.md) |
+| Notificações | Mock local | `useNotificationStore` | [contrato-back-notificacoes.md](./contrato-back-notificacoes.md) |
+
+### Endpoints em uso (resumo)
+
+| Método | Rota | Uso no app |
+|--------|------|------------|
+| `POST` | `/auth/login` | Login |
+| `POST` | `/auth/logout` | Logout |
+| `POST` | `/refresh` | Refresh automático (interceptor) |
+| `GET` | `/users/me` | Perfil autenticado |
+| `PATCH` | `/users/me` | Atualizar nome / UFs |
+| `PATCH` | `/users/me/cnpj` | Atualizar CNPJ |
+| `GET` | `/users/check-email` | Disponibilidade de e-mail (cadastro) |
+| `POST` | `/users/register` | Cadastro MEI + tokens |
+| `GET` | `/locations/states` | UFs no step 1 |
+| `GET` | `/cnpj/cnaes` | CNAEs no step 2 |
+| `POST` | `/auth/password-reset/request` | Solicitar / reenviar código |
+| `POST` | `/auth/password-reset/verify` | Validar código |
+| `POST` | `/auth/password-reset/complete` | Nova senha |
+| `GET` | `/opportunities/recommended` | Aba “Pra você” |
+| `GET` | `/opportunities` | Busca por texto |
+| `GET` | `/opportunities/region` | Aba “Região” |
+| `GET` | `/opportunities/value` | Aba “Valor” |
+| `GET` | `/opportunities/term` | Aba “Prazo” |
+| `GET` | `/opportunities/:id` | Modal de detalhe |
+| `PATCH` | `/opportunities/:id/favorite` | Favoritar |
+| `GET` | `/opportunities/favorites/list` | Painel de favoritos |
+
+Erros da API seguem formato FastAPI (`detail`); o app usa `getApiErrorMessage()` para exibir mensagens legíveis.
 
 ## Tasks feitas
 
 | Ticket | Descrição | Responsável |
-|---|---|-------------|
+|---|---|---|
 | KAN-17 | Modal da tela Home (detalhe do edital) | João |
 | KAN-18 | Finalizar entrega da UI de login (`LoginScreen`), formulário + erros de autenticação. | Leo |
-| KAN-19 | Finalizar entrega do fluxo completo: e-mail → código de confirmação (mock `0000`) → nova senha → retorno ao login. | Leo |
-
-## Pendência de back-end
-
-Contratos em rascunho (formato alinhado ao de editais). O app ainda consome mocks nas stores/services; os `.md` descrevem o que o back deve expor na integração.
-
-| Domínio | Documento |
-|---------|-----------|
-| Visão geral / mapa | [contrato-back-visao-geral.md](./contrato-back-visao-geral.md) |
-| Editais | [contrato-back-editais.md](./contrato-back-editais.md) |
-| Login e sessão | [contrato-back-auth.md](./contrato-back-auth.md) |
-| Recuperação de senha | [contrato-back-recuperacao-senha.md](./contrato-back-recuperacao-senha.md) |
-| Cadastro MEI | [contrato-back-cadastro.md](./contrato-back-cadastro.md) |
-| Notificações (Cap. 3) | [contrato-back-notificacoes.md](./contrato-back-notificacoes.md) |
+| KAN-19 | Finalizar entrega do fluxo completo: e-mail → código de confirmação → nova senha → retorno ao login. | Leo |
 
 ## Documentos relacionados
 
@@ -68,3 +108,4 @@ Contratos em rascunho (formato alinhado ao de editais). O app ainda consome mock
 - [Contrato — Auth](./contrato-back-auth.md)
 - [Contrato — Recuperação de senha](./contrato-back-recuperacao-senha.md)
 - [Contrato — Cadastro](./contrato-back-cadastro.md)
+- [Contrato — Notificações](./contrato-back-notificacoes.md)

@@ -1,7 +1,7 @@
 # Capstone 4 — Versão candidata
 
 - **Data de entrega:** 13/06/2026
-- **Status:** concluído
+- **Status:** Concluído.
 
 ## Escopo
 
