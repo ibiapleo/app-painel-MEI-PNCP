@@ -1,95 +1,123 @@
 # Contrato do back-end — Cadastro de usuário (MEI)
 
-> **Status:** rascunho. O cadastro em 3 passos persiste rascunho e conclusão apenas no app (`useSignupStore`, chave `@licitafacil/signup`). Estados vêm da [API IBGE](https://servicodados.ibge.gov.br/api/docs/localidades) via `fetchStates()` — não passa pelo back do projeto. Este documento descreve o contrato para **criar conta** no back interno.
+> **Status:** Concluído.<br> O cadastro em 3 passos chama o back no submit final (`useSignup` → `authService.registerMei()`). Rascunho dos steps permanece local em `useSignupStore`; UFs e CNAEs vêm do back.
 
-## Fluxo no app (hoje)
+## Fluxo no app
 
-| Passo | Campos | Tela |
-|-------|--------|------|
-| 1 | UFs de interesse (`selectedStates`: siglas) | `StepOneScreen` |
-| 2 | Nome, CNPJ | `StepTwoScreen` |
-| 3 | E-mail, senha | `StepThreeScreen` |
-| — | `completeRegistration()` | Navega para success → login |
-
-Rascunho salvo localmente a cada alteração; **não há** `POST` parcial ao servidor hoje.
+| Passo | Campos | Tela | Integração back |
+|-------|--------|------|-----------------|
+| 1 | UFs de interesse (`selectedStates`: siglas) | `StepOneScreen` | `GET /locations/states` |
+| 2 | Nome, CNPJ | `StepTwoScreen` | `GET /cnpj/cnaes?cnpj=` (auto ao informar CNPJ válido) |
+| 3 | E-mail, senha | `StepThreeScreen` | `GET /users/check-email` → `POST /users/register` |
+| — | Sucesso | redirect para `/(tabs)` | Login automático (tokens retornados no register) |
 
 ## Tipos compartilhados
 
-### `SignupDraft` (espelho do app)
+### `SignupDraft` (estado local)
 
-`src/stores/signup/types.ts`:
+`src/stores/auth/useSignUpStore.ts`:
 
 ```ts
 export interface SignupDraft {
-  selectedStates: string[];  // siglas (ex: "SP", "RJ")
   name: string;
-  cnpj: string;              // mascarado no UI; enviar só dígitos ao back
+  cnpj: string;
   email: string;
   password: string;
+  selectedStates: string[];  // siglas, ex: "PE", "SP"
+  cnaes: Cnae[];
+}
+
+export interface Cnae {
+  id: string;
+  title: string;
 }
 ```
 
-### `RegisterUserRequest` (proposta — payload final)
+### Payload de registro
+
+`RegisterMeiPayload` em `src/services/authService.ts`:
 
 ```ts
-export interface RegisterUserRequest {
+export type RegisterMeiPayload = {
   name: string;
-  cnpj: string;                // 14 dígitos
   email: string;
   password: string;
-  interestedStateIds: string[]; // siglas (ex: "SP", "RJ")
+  cnpj: string;                      // 14 dígitos, sem máscara
+  interested_state_siglas: string[]; // siglas das UFs
+  cnae_ids: string[];
+};
+```
+
+### Resposta de registro
+
+Mesmo formato de login — tokens em snake_case:
+
+```json
+{
+  "access_token": "<jwt>",
+  "refresh_token": "<jwt>"
 }
 ```
 
-### `RegisterUserResponse` (proposta)
+O app persiste os tokens no SecureStore e chama `GET /users/me` antes de marcar `isRegistrationComplete`.
+
+### `LocationState`
 
 ```ts
-export interface RegisterUserResponse {
-  user: {
-    id: string;
-    name: string;
-    email: string;
-  };
-  // Opcional: login automático após cadastro
-  tokens?: AuthTokens; // ver contrato-back-auth.md
-}
+export type LocationState = {
+  id: string;
+  sigla: string;
+  nome: string;
+};
 ```
 
 ## Endpoints
 
-### 1. Registrar usuário (fluxo atual — submit no fim do step 3)
+### 1. Listar UFs
 
-Substitui `completeRegistration()` + persistência local de `isRegistrationComplete`.
+Usado por `locationService.getStates()` no step 1.
 
 ```http
-POST /users/register
-Content-Type: application/json
+GET /locations/states
 ```
 
-**Body** → `RegisterUserRequest` (campos sem máscara de CNPJ).
-
-**201 Created** → `RegisterUserResponse`
-
-**409 Conflict**
+**200 OK**
 ```json
-{
-  "error": {
-    "code": "EMAIL_ALREADY_EXISTS",
-    "message": "Este e-mail já está cadastrado."
-  }
-}
+[
+  { "id": "26", "sigla": "PE", "nome": "Pernambuco" }
+]
 ```
-
-**422 Unprocessable Entity** — CNPJ inválido, senha fraca, lista de UFs vazia (`VALIDATION_ERROR` com `fields` opcional).
 
 ---
 
-### 2. Verificar disponibilidade de e-mail (opcional)
+### 2. CNAEs por CNPJ
 
-Útil no step 3 antes de enviar o formulário completo.
+Usado por `authService.getCnaesByCnpj()` no step 2 (quando CNPJ tem 14 dígitos).
 
 ```http
-GET /users/check-email?email=<email>
+GET /cnpj/cnaes?cnpj=12345678000199
+```
+
+**200 OK**
+```json
+{
+  "primary_cnae": { "id": "6201501", "description": "Desenvolvimento de programas..." },
+  "secondary_cnaes": [
+    { "id": "6202300", "description": "Desenvolvimento e licenciamento..." }
+  ]
+}
+```
+
+**404 / erro** — CNPJ não encontrado. O app exibe "CNPJ não encontrado ou erro na busca."
+
+---
+
+### 3. Verificar disponibilidade de e-mail
+
+Usado no step 3 antes do registro.
+
+```http
+GET /users/check-email?email=usuario@email.com
 ```
 
 **200 OK**
@@ -97,58 +125,52 @@ GET /users/check-email?email=<email>
 { "available": true }
 ```
 
+Se `available === false`, o app bloqueia o submit com "Este e-mail já está em uso."
+
 ---
 
-### 3. Rascunho de cadastro no servidor (opcional — não implementado no app)
+### 4. Registrar usuário MEI
 
-Se no futuro o rascunho sair do dispositivo:
+Usado por `authService.registerMei()` no submit do step 3.
 
 ```http
-PUT /users/register/draft
-Authorization: Bearer <token temporário ou anônimo>
+POST /users/register
+Content-Type: application/json
 ```
 
-**Body** — subset de `SignupDraft`.
+**Body** → `RegisterMeiPayload`
 
-**200 OK** → rascunho salvo com `draftId`.
-
-> Hoje o app **não exige** este endpoint; o rascunho continua no `useSignupStore` até decisão explícita do time.
-
-## Integração com IBGE (referência)
-
-| Dado | Origem hoje | Back precisa? |
-|------|-------------|----------------|
-| Lista de UFs | `GET` IBGE direto no app | Opcional: back pode cachear e expor `GET /locations/states` para unificar |
-
-## Erros padronizados
-
+**201 Created / 200 OK**
 ```json
 {
-  "error": {
-    "code": "EMAIL_ALREADY_EXISTS",
-    "message": "Este e-mail já está cadastrado."
-  }
+  "access_token": "<jwt>",
+  "refresh_token": "<jwt>"
 }
 ```
 
-Códigos esperados: `EMAIL_ALREADY_EXISTS`, `CNPJ_ALREADY_EXISTS`, `VALIDATION_ERROR`, `INTERNAL_ERROR`.
+**409 Conflict / 422 Unprocessable Entity** — e-mail ou CNPJ já cadastrado, senha fraca, CNAEs inválidos, etc. Corpo FastAPI com `detail` (string ou array de validação).
 
-## Como o front consome hoje (mock)
+## Regras de senha (validadas no app e no back)
 
-| Comportamento | Arquivo / store | Endpoint equivalente |
+Mínimo 8 caracteres, pelo menos: 1 número, 1 letra maiúscula, 1 caractere especial (`validatePassword` em `useSignup.ts`).
+
+## Erros
+
+Formato FastAPI (`detail`). Ver [contrato-back-auth.md](./contrato-back-auth.md#erros).
+
+## Como o front consome
+
+| Comportamento | Arquivo | Endpoint |
 |---|---|---|
-| Listar UFs | `fetchStates()` em `ibge.ts` | IBGE direto ou `GET /locations/states` |
-| Salvar rascunho | `useSignupStore` (persist local) | _(opcional)_ `PUT /users/register/draft` |
-| Concluir cadastro | `completeRegistration()` | `POST /users/register` |
-| Gate onboarding vs login | `isRegistrationComplete` + `useAppEntry` | Após 201, app pode setar flag local ou inferir de `GET /auth/me` |
+| Listar UFs | `locationService.getStates()` | `GET /locations/states` |
+| Buscar CNAEs do CNPJ | `authService.getCnaesByCnpj()` | `GET /cnpj/cnaes` |
+| Verificar e-mail | `authService.checkEmail()` | `GET /users/check-email` |
+| Concluir cadastro + login | `authService.registerMei()` | `POST /users/register` |
+| Gate onboarding vs login | `isRegistrationComplete` + `useAppEntry` | Flag local após register bem-sucedido |
 
-### Mudanças previstas no app após integração
-
-- `completeRegistration()` chama `POST /users/register` e só então marca cadastro concluído.
-- Remover persistência de senha no rascunho local após sucesso.
-- Opcional: login automático se o back retornar `tokens` no 201.
+Persistência local do rascunho: apenas `isRegistrationComplete` é salvo no AsyncStorage (`signup-storage`); campos do formulário não são persistidos entre sessões.
 
 ## Documentos relacionados
 
 - [Autenticação](./contrato-back-auth.md)
-- [Editais](./contrato-back-editais.md) — compatibilidade usa perfil do MEI cadastrado
+- [Editais](./contrato-back-editais.md) — compatibilidade usa perfil/CNAEs do MEI cadastrado

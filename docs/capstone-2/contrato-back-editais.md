@@ -1,144 +1,133 @@
 # Contrato do back-end — Editais
 
-> **Status:** rascunho. Os dados hoje vêm de `src/services/opportunitiesService.ts` (mockados). Este documento descreve o contrato que o back-end deve expor para substituir o mock.
+> **Status:** Concluído. <br>Dados consumidos via `src/services/opportunitiesService.ts` (Axios + `EXPO_PUBLIC_API_URL`). Todas as rotas exigem `Authorization: Bearer <access_token>`.
 
 ## Origem dos dados
 
-A fonte primária é a [API pública do PNCP](https://www.pncp.gov.br/api/pncp/swagger-ui/index.html). O back-end interno do projeto **agrega, enriquece e expõe** esses dados para o app, aplicando regras de compatibilidade com o perfil do MEI.
+A fonte primária é a [API pública do PNCP](https://www.pncp.gov.br/api/pncp/swagger-ui/index.html). O back-end interno **agrega, enriquece e expõe** esses dados para o app, aplicando regras de compatibilidade com o perfil do MEI autenticado.
 
 ## Tipos compartilhados
 
-### `Opportunity` (resumo, usado na lista)
+Definidos em `src/types/opportunity.ts`:
 
-Já existe em `src/types/opportunity.ts`:
+### `Opportunity` (lista / cards)
 
 ```ts
 export interface Opportunity {
   id: string;
   title: string;
-  company: string;       // nome do órgão
-  location: string;      // "Cidade/UF"
-  description: string;   // resumo curto (1–2 linhas)
+  company: string;           // nome do órgão
+  location: string;          // "Cidade/UF"
+  description: string;
   estimatedValue: number;
-  daysRemaining: number; // calculado a partir da data limite
-  compatibilityLabel: string; // ex: "Altamente Compatível"
-  isFavorite: boolean;   // por usuário autenticado
+  closingDate: string;       // ISO 8601
+  daysRemaining: number;     // calculado no back
+  isExpired: boolean;
+  compatibilityLabel: string;
+  isFavorite: boolean;
 }
 ```
 
-### `OpportunityDetail` (proposta — usado no modal)
-
-Estende `Opportunity` com os campos necessários para a tela de detalhe:
+### `OpportunityDetail` (modal de detalhe)
 
 ```ts
 export interface OpportunityDetail extends Opportunity {
-  // Identificação no PNCP
-  pncpId: string;            // "numeroControlePncp"
-  pncpUrl: string;           // link para o edital no portal PNCP
-
-  // Órgão
+  pncpId: string;
+  pncpUrl: string;
   agency: {
-    name: string;            // razão social
-    cnpj: string;
-    unit: string;            // unidade compradora
-  };
-
-  // Modalidade / objeto
-  modality: string;          // ex: "Pregão eletrônico", "Dispensa", etc.
-  objectFull: string;        // descrição completa do objeto
-  judgementCriterion: string; // ex: "Menor preço"
-
-  // Datas
-  openingDate: string;       // ISO 8601
-  closingDate: string;       // ISO 8601 — base de cálculo de daysRemaining
-  proposalsOpeningDate?: string;
-
-  // Anexos
-  attachments: Array<{
     name: string;
-    url: string;
-    sizeBytes?: number;
-    mimeType?: string;
-  }>;
-
-  // Compatibilidade
-  compatibility: {
-    score: number;           // 0..100
-    label: string;            // mesmo da `compatibilityLabel`
-    reasons: string[];        // explicações curtas: "Atende ao CNAE", "Localização compatível", etc.
+    cnpj: string;
+    unit: string;
   };
+  modality: string;
+  objectFull: string;
+  judgementCriterion: string;
+  openingDate: string;
+  closingDate: string;
+  proposalsOpeningDate: string;
+  categories: OpportunityCategory[];
+  compatibility: {
+    score: number;
+    label: string;
+    reasons: string[];
+  };
+  status: string;
+}
+```
 
-  // Status do edital
-  status: 'aberto' | 'encerrado' | 'suspenso' | 'cancelado';
+### `PaginatedOpportunities`
+
+```ts
+export interface PaginatedOpportunities {
+  items: Opportunity[];
+  page: number;
+  pageSize: number;
+  total: number;
 }
 ```
 
 ## Endpoints
 
-### 1. Listar oportunidades recomendadas
+### 1. Editais recomendados (“Pra você”)
 
-Usado por `getRecommendedOpportunities()` (home).
-
-```http
-GET /opportunities/recommended
-Authorization: Bearer <token>
-```
-
-**200 OK**
-```json
-[
-  { /* Opportunity */ }
-]
-```
-
-### 2. Buscar oportunidades
-
-Usado pela tela de busca (Capstone 2 / refinamento Capstone 3).
+Usado por `getRecommendedOpportunities()` → aba **Pra você** e busca vazia.
 
 ```http
-GET /opportunities
-  ?search=<texto livre>
-  &state=<UF>
-  &city=<municipio>
-  &modality=<modalidade>
-  &minValue=<numero>
-  &maxValue=<numero>
-  &compatibility=<min_score 0..100>
-  &page=<n>
-  &pageSize=<n>
-Authorization: Bearer <token>
+GET /opportunities/recommended?page=1&pageSize=20
+Authorization: Bearer <access_token>
 ```
 
-**200 OK**
-```json
-{
-  "items": [ /* Opportunity[] */ ],
-  "page": 1,
-  "pageSize": 20,
-  "total": 132
-}
+**200 OK** → `PaginatedOpportunities`
+
+---
+
+### 2. Busca por texto
+
+Usado por `searchOpportunities()`.
+
+```http
+GET /opportunities?search=<texto>&page=1&pageSize=20
+Authorization: Bearer <access_token>
 ```
 
-### 3. Detalhe do edital (modal)
+**200 OK** → `PaginatedOpportunities`
 
-Usado pelo modal de detalhe.
+---
+
+### 3. Filtros por aba (Home)
+
+| Aba no app | Função | Endpoint |
+|------------|--------|----------|
+| Região | `getOpportunitiesByRegion()` | `GET /opportunities/region?page=&pageSize=` |
+| Valor | `getOpportunitiesByValue()` | `GET /opportunities/value?page=&pageSize=` |
+| Prazo | `getOpportunitiesByTerm()` | `GET /opportunities/term?page=&pageSize=` |
+
+**200 OK** → `PaginatedOpportunities`
+
+---
+
+### 4. Detalhe do edital (modal)
+
+Usado por `getOpportunityDetail()`.
 
 ```http
 GET /opportunities/:id
-Authorization: Bearer <token>
+Authorization: Bearer <access_token>
 ```
 
 **200 OK** → `OpportunityDetail`
 
-**404 Not Found** quando o edital não existir ou tiver sido removido.
+**404 Not Found** — edital inexistente ou removido.
 
-### 4. Favoritar / desfavoritar
+---
 
-Usado por `toggleFavoriteOpportunity()`.
+### 5. Favoritar / desfavoritar
+
+Usado por `toggleFavoriteOpportunity()` na Home e no Painel.
 
 ```http
 PATCH /opportunities/:id/favorite
-Authorization: Bearer <token>
+Authorization: Bearer <access_token>
 ```
 
 **200 OK**
@@ -146,42 +135,43 @@ Authorization: Bearer <token>
 { "id": "<id>", "isFavorite": true }
 ```
 
-### 5. Listar favoritos (a definir)
+---
+
+### 6. Listar favoritos (Painel)
+
+Usado por `getFavoriteOpportunities()`.
 
 ```http
-GET /opportunities/favorites
-Authorization: Bearer <token>
+GET /opportunities/favorites/list?page=1&pageSize=50
+Authorization: Bearer <access_token>
 ```
 
-**200 OK** → `Opportunity[]`
+**200 OK** → `PaginatedOpportunities`
 
-## Erros padronizados
+## Erros
 
-Todas as respostas de erro seguem:
+Formato FastAPI (`detail`). Exemplos tratados nas stores:
 
 ```json
-{
-  "error": {
-    "code": "OPPORTUNITY_NOT_FOUND",
-    "message": "Edital não encontrado."
-  }
-}
+{ "detail": "Não foi possível carregar os editais recomendados." }
 ```
 
-Códigos esperados: `UNAUTHORIZED`, `OPPORTUNITY_NOT_FOUND`, `VALIDATION_ERROR`, `INTERNAL_ERROR`.
+**401 Unauthorized** — dispara refresh automático via interceptor; se falhar, usuário é deslogado.
 
-## Pendências / decisões em aberto
+## Como o front consome
 
-- [ ] Confirmar formato de `daysRemaining`: calculado no back ou no front a partir de `closingDate`?
-- [ ] Definir paginação para `/opportunities/recommended` (hoje retorna lista inteira).
-- [ ] Definir esquema de compatibilidade (`score` e `reasons`) com a dupla — depende de quais campos do perfil do MEI são considerados.
-- [ ] Confirmar se anexos serão proxy do PNCP ou link direto.
-- [ ] Confirmar política de cache no app (revalidar a cada N min? pull-to-refresh?).
-
-## Como o front consome hoje (mock)
-
-| Função | Arquivo | Endpoint equivalente |
+| Função | Arquivo | Store / tela |
 |---|---|---|
-| `getRecommendedOpportunities()` | `src/services/opportunitiesService.ts` | `GET /opportunities/recommended` |
-| `toggleFavoriteOpportunity(id)` | `src/services/opportunitiesService.ts` | `PATCH /opportunities/:id/favorite` |
-| _(a criar)_ `getOpportunityById(id)` | `src/services/opportunitiesService.ts` | `GET /opportunities/:id` |
+| `getRecommendedOpportunities()` | `opportunitiesService.ts` | `useOpportunitiesStore` — aba Pra você |
+| `searchOpportunities()` | `opportunitiesService.ts` | `useOpportunitiesStore.search()` |
+| `getOpportunitiesByRegion/Value/Term()` | `opportunitiesService.ts` | `useOpportunitiesStore.changeTab()` |
+| `getOpportunityDetail()` | `opportunitiesService.ts` | `HomeScreen`, `PainelScreen` (modal) |
+| `toggleFavoriteOpportunity()` | `opportunitiesService.ts` | `useOpportunitiesStore`, `useFavoritesStore` |
+| `getFavoriteOpportunities()` | `opportunitiesService.ts` | `useFavoritesStore` — Painel |
+
+Ordenação local: abas **Pra você** e **Prazo** aplicam `sortOpportunitiesByDeadline()` após receber os itens.
+
+## Documentos relacionados
+
+- [Autenticação](./contrato-back-auth.md) — token Bearer obrigatório
+- [Cadastro](./contrato-back-cadastro.md) — perfil/CNAEs usados na compatibilidade

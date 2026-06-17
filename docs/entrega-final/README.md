@@ -1,7 +1,7 @@
 # Entrega Final
 
 - **Data de entrega:** a definir
-- **Status:** concluído
+- **Status:** Concluído.
 
 ## Escopo
 
@@ -29,6 +29,8 @@ Além das entregas dos capstones anteriores (consulta de editais, autenticação
 
 ## Repositório e documentação
 
-- README geral do projeto com instruções de execução local
-- Documentação organizada por capstone em [`docs/`](../)
-- Release **1.0** integrada na branch `main`
+- README geral do projeto com instruções de execução local.
+- Documentação organizada por capstone em [`docs/`](../).
+- Release **1.0.1** integrada na branch `main`.
+- Builds de production e apk.
+- Screencast disponível na documentação.

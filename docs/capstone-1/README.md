@@ -5,9 +5,12 @@
 
 ## Escopo
 
-> Protótipo navegável com fluxos principais e identidade visual do app.
+> Protótipo navegável com fluxos principais e identidade visual do app. [[Protótipo]](https://www.figma.com/proto/Ch3l5K1T688Ns3viCpJXcj/LicitaF%C3%A1cil?node-id=13-6872&t=CSjO7YkjqTIgp2hK-0&scaling=scale-down&content-scaling=fixed&page-id=0%3A1&starting-point-node-id=7%3A1649&show-proto-sidebar=1)
+[[Figma]](https://www.figma.com/design/Ch3l5K1T688Ns3viCpJXcj/LicitaF%C3%A1cil?node-id=0-1&p=f&t=QKCcjL9jnL3GIB49-0)
 
 ## O que entregamos
+
+Além do protótipo começamos a configuração do repositório e do projeto.
 
 Tickets concluídos do board (Equipe 2):
 

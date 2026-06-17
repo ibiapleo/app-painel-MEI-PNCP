@@ -5,7 +5,7 @@
 
 ## Escopo
 
-> MVP integrado com checklist, documentos, alertas e dashboard.
+> MVP integrado conforme contratos da [capstone-2](../capstone-2/README.md) com checklist, documentos, alertas e dashboard.
 
 ## O que foi entregue
 
